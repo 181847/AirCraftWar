@@ -4,8 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AirCraftWar", "AirCraftWar\AirCraftWar.vcxproj", "{1B87E2E2-6E50-498A-946F-B966E66F5406}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487} = {F270A4B3-C9F9-47F6-AD34-7925B9643487}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComponentFactory", "ComponentFactory\ComponentFactory.vcxproj", "{A5DBF807-7530-422E-AD62-CFD7B49331C6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EyeEngine", "EyeEngine\EyeEngine.vcxproj", "{F270A4B3-C9F9-47F6-AD34-7925B9643487}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +36,14 @@ Global
 		{A5DBF807-7530-422E-AD62-CFD7B49331C6}.Release|x64.Build.0 = Release|x64
 		{A5DBF807-7530-422E-AD62-CFD7B49331C6}.Release|x86.ActiveCfg = Release|Win32
 		{A5DBF807-7530-422E-AD62-CFD7B49331C6}.Release|x86.Build.0 = Release|Win32
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Debug|x64.ActiveCfg = Debug|x64
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Debug|x64.Build.0 = Debug|x64
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Debug|x86.ActiveCfg = Debug|Win32
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Debug|x86.Build.0 = Debug|Win32
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Release|x64.ActiveCfg = Release|x64
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Release|x64.Build.0 = Release|x64
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Release|x86.ActiveCfg = Release|Win32
+		{F270A4B3-C9F9-47F6-AD34-7925B9643487}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
