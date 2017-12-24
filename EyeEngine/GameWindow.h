@@ -2,7 +2,6 @@
 #include <DirectX12/Common/d3dUtil.h>
 #include <DirectX12/Common/GameTimer.h>
 
-
 // Link necessary d3d12 libraries.
 #pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
@@ -48,7 +47,7 @@ protected:
 protected:
 
 	bool InitMainWindow();
-	/*bool InitDirect3D();
+	bool InitDirect3D();
 	void CreateCommandObjects();
 	void CreateSwapChain();
 
@@ -62,7 +61,7 @@ protected:
 
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);*/
+	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 protected:
 
@@ -87,8 +86,8 @@ protected:
 	Microsoft::WRL::ComPtr<IDXGISwapChain> _SwapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> _d3dDevice;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> _Fence;
-	UINT64 mCurrentFence = 0;
+	Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
+	UINT64 _currentFence = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> _commandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdListAlloc;
