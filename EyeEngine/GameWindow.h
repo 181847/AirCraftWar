@@ -2,17 +2,26 @@
 #include <DirectX12/Common/d3dUtil.h>
 #include <DirectX12/Common/GameTimer.h>
 
+
+// Link necessary d3d12 libraries.
+#pragma comment(lib,"d3dcompiler.lib")
+#pragma comment(lib, "D3D12.lib")
+#pragma comment(lib, "dxgi.lib")
+
 namespace EyeEngine
 {
 
+
 class GameWindow
 {
+public:
+	GameWindow(HINSTANCE hInstance);
+	virtual ~GameWindow();
 protected:
 
-	GameWindow(HINSTANCE hInstance);
 	GameWindow(const GameWindow& rhs) = delete;
 	GameWindow& operator=(const GameWindow& rhs) = delete;
-	virtual ~GameWindow();
+	
 
 public:
 
@@ -33,13 +42,13 @@ public:
 protected:
 	virtual void CreateRtvAndDsvDescriptorHeaps();
 	virtual void OnResize();
-	virtual void Update(const GameTimer& gt) = 0;
-	virtual void Draw(const GameTimer& gt) = 0;
+	//virtual void Update(const GameTimer& gt) = 0;
+	//virtual void Draw(const GameTimer& gt) = 0;
 
 protected:
 
 	bool InitMainWindow();
-	bool InitDirect3D();
+	/*bool InitDirect3D();
 	void CreateCommandObjects();
 	void CreateSwapChain();
 
@@ -53,7 +62,7 @@ protected:
 
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);*/
 
 protected:
 
@@ -68,8 +77,8 @@ protected:
 	bool      _fullscreenState = false;// fullscreen enabled
 
 									   // Set true to use 4X MSAA (?.1.8).  The default is false.
-	bool      _m4xMsaaState = false;    // 4X MSAA enabled
-	UINT      _m4xMsaaQuality = 0;      // quality level of 4X MSAA
+	bool      _4xMsaaState = false;    // 4X MSAA enabled
+	UINT      _4xMsaaQuality = 0;      // quality level of 4X MSAA
 
 									   // Used to keep track of the “delta-time?and game time (?.4).
 	GameTimer _timer;
@@ -87,7 +96,7 @@ protected:
 
 	static const int _swapChainBufferCount = 2;
 	int _currBackBuffer = 0;
-	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[SwapChainBufferCount];
+	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[_swapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> _depthStencilBuffer;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
@@ -107,7 +116,6 @@ protected:
 	DXGI_FORMAT _depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	int _clientWidth = 800;
 	int _clientHeight = 600;
-};
 };
 
 }// namespace EyeEngine
