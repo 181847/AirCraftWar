@@ -3,6 +3,7 @@
 #include <MyTools/MyAssert.h>
 #include <iostream>
 #include "DescriptorHeapHelper.h"
+#include "D3D12Helper.h"
 
 namespace EyeEngine
 {
@@ -109,6 +110,142 @@ bool GameWindow::Initialize()
 	OnResize();
 
 	return true;
+}
+
+bool GameWindow::InitMainWindow()
+{
+	WNDCLASS wc;
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = MainWndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = _hAppInst;
+	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
+	wc.hCursor = LoadCursor(0, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+	wc.lpszMenuName = 0;
+	wc.lpszClassName = L"GameWnd";
+
+	if (!RegisterClass(&wc))
+	{
+		MessageBox(0, L"RegisterClass Failed.", L"GameWindow::InitMainWindow", 0);
+		return false;
+	}
+
+	// figure out the window size to fit to the game's resolution.
+	RECT R = { 0, 0, _clientWidth, _clientHeight };
+	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
+	int width = R.right - R.left;
+	int height = R.bottom - R.top;
+
+	_hMainWnd = CreateWindow(L"GameWnd", _mainWndCaption.c_str(),
+		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, _hAppInst, 0);
+
+	if (!_hMainWnd)
+	{
+		MessageBox(0, L"CreateWindow Failed.", L"GameWindow::InitMainWindow", 0);
+		return false;
+	}
+
+	ShowWindow(_hMainWnd, SW_SHOW);
+	UpdateWindow(_hMainWnd);
+
+	return true;
+}
+
+bool GameWindow::InitDirect3D()
+{
+#if defined(DEBUG) || defined(_DEBUG) 
+	// Enable the D3D12 debug layer.
+	{
+		ComPtr<ID3D12Debug> debugController;
+		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+		debugController->EnableDebugLayer();
+	}
+#endif
+
+	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&_dxgiFactory)));
+
+	// Try to create hardware device.
+	HRESULT hardwareResult = D3D12CreateDevice(
+		nullptr,             // default adapter
+		D3D_FEATURE_LEVEL_11_0,
+		IID_PPV_ARGS(&_d3dDevice));
+
+	// Fallback to WARP device.
+	if (FAILED(hardwareResult))
+	{
+		ComPtr<IDXGIAdapter> pWarpAdapter;
+		ThrowIfFailed(_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter)));
+
+		ThrowIfFailed(D3D12CreateDevice(
+			pWarpAdapter.Get(),
+			D3D_FEATURE_LEVEL_11_0,
+			IID_PPV_ARGS(&_d3dDevice)));
+	}
+
+	ThrowIfFailed(_d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, 
+		IID_PPV_ARGS(_fence.GetAddressOf())));
+
+	_rtvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	_dsvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	_cbvSrvUavDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
+	msQualityLevels.Format = _backBufferFormat;
+	msQualityLevels.SampleCount = 4;
+	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+	msQualityLevels.NumQualityLevels = 0;
+	ThrowIfFailed(_d3dDevice->CheckFeatureSupport(
+		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+		&msQualityLevels,
+		sizeof(msQualityLevels)));
+
+	_4xMsaaQuality = msQualityLevels.NumQualityLevels;
+	assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
+
+#ifdef _DEBUG
+	LogAdapters();
+#endif
+
+	CreateCommandObjects();
+	CreateSwapChain();
+
+	return false;
+}
+
+void GameWindow::CreateCommandObjects()
+{
+	D3D12Helper::CreateCommandQueue(
+		_d3dDevice.Get(), _commandQueue.GetAddressOf(), 
+		D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+	D3D12Helper::CreateCommandAllocator(
+		_d3dDevice.Get(), _directCmdListAlloc.GetAddressOf(),
+		D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+	D3D12Helper::CreateCommandList(_d3dDevice.Get(),
+		_commandList.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT,
+		_directCmdListAlloc.Get());
+}
+
+void GameWindow::CreateSwapChain()
+{
+	DXGI_SAMPLE_DESC sampleDesc;
+	sampleDesc.Count = _4xMsaaState ? 4 : 1;
+	sampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+
+	D3D12Helper::CreateSwapChain(
+		_dxgiFactory.Get(), _commandQueue.Get(), 
+		_SwapChain.GetAddressOf(),
+		_hMainWnd, 
+		D3D12Helper::DxgiMode(_backBufferFormat, _clientWidth, _clientHeight), 
+		sampleDesc);
+}
+
+void GameWindow::FlushCommandQueue()
+{
+	
 }
 
 LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -264,45 +401,80 @@ void GameWindow::OnResize()
 	// TODO: implement the OnResize .
 }
 
-bool GameWindow::InitMainWindow()
+
+void GameWindow::LogAdapters()
 {
-	WNDCLASS wc;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc = MainWndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = _hAppInst;
-	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(0, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-	wc.lpszMenuName = 0;
-	wc.lpszClassName = L"GameWnd";
-
-	if (!RegisterClass(&wc))
+	UINT i = 0;
+	IDXGIAdapter* adapter = nullptr;
+	std::vector<IDXGIAdapter*> adapterList;
+	while (_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
 	{
-		MessageBox(0, L"RegisterClass Failed.", L"GameWindow::InitMainWindow", 0);
-		return false;
+		DXGI_ADAPTER_DESC desc;
+		adapter->GetDesc(&desc);
+
+		std::wstring text = L"***Adapter: ";
+		text += desc.Description;
+		text += L"\n";
+
+		OutputDebugString(text.c_str());
+
+		adapterList.push_back(adapter);
+
+		++i;
 	}
 
-	// figure out the window size to fit to the game's resolution.
-	RECT R = { 0, 0, _clientWidth, _clientHeight };
-	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
-	int width = R.right - R.left;
-	int height = R.bottom - R.top;
-
-	_hMainWnd = CreateWindow(L"GameWnd", _mainWndCaption.c_str(),
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, _hAppInst, 0);
-
-	if (!_hMainWnd)
+	for (size_t i = 0; i < adapterList.size(); ++i)
 	{
-		MessageBox(0, L"CreateWindow Failed.", L"GameWindow::InitMainWindow", 0);
-		return false;
+		LogAdapterOutputs(adapterList[i]);
+		ReleaseCom(adapterList[i]);
 	}
+}
 
-	ShowWindow(_hMainWnd, SW_SHOW);
-	UpdateWindow(_hMainWnd);
+void GameWindow::LogAdapterOutputs(IDXGIAdapter * adapter)
+{
+	UINT i = 0;
+	IDXGIOutput* output = nullptr;
+	while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
+	{
+		DXGI_OUTPUT_DESC desc;
+		output->GetDesc(&desc);
 
-	return true;
+		std::wstring text = L"***Output: ";
+		text += desc.DeviceName;
+		text += L"\n";
+		OutputDebugString(text.c_str());
+
+		LogOutputDisplayModes(output, _backBufferFormat);
+
+		ReleaseCom(output);
+
+		++i;
+	}
+}
+
+void GameWindow::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT format)
+{
+	UINT count = 0;
+	UINT flags = 0;
+
+	// Call with nullptr to get list count.
+	output->GetDisplayModeList(format, flags, &count, nullptr);
+
+	std::vector<DXGI_MODE_DESC> modeList(count);
+	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
+
+	for (auto& x : modeList)
+	{
+		UINT n = x.RefreshRate.Numerator;
+		UINT d = x.RefreshRate.Denominator;
+		std::wstring text =
+			L"Width = " + std::to_wstring(x.Width) + L" " +
+			L"Height = " + std::to_wstring(x.Height) + L" " +
+			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
+			L"\n";
+
+		::OutputDebugString(text.c_str());
+	}
 }
 
 }// namespace EyeEngine
