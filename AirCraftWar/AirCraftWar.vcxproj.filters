@@ -17,4 +17,9 @@
   <ItemGroup>
     <Text Include="ReadMe.md" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="mainGame.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>
