@@ -145,6 +145,7 @@
     <ClInclude Include="..\..\Library\DirectX12\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\Library\DirectX12\Common\MathHelper.h" />
     <ClInclude Include="..\..\Library\DirectX12\Common\UploadBuffer.h" />
+    <ClInclude Include="D3D12Helper.h" />
     <ClInclude Include="DescriptorHeapHelper.h" />
     <ClInclude Include="GameWindow.h" />
   </ItemGroup>
@@ -156,6 +157,7 @@
     <ClCompile Include="..\..\Library\DirectX12\Common\GameTimer.cpp" />
     <ClCompile Include="..\..\Library\DirectX12\Common\GeometryGenerator.cpp" />
     <ClCompile Include="..\..\Library\DirectX12\Common\MathHelper.cpp" />
+    <ClCompile Include="D3D12Helper.cpp" />
     <ClCompile Include="DescriptorHeapHelper.cpp" />
     <ClCompile Include="GameWindow.cpp" />
   </ItemGroup>
