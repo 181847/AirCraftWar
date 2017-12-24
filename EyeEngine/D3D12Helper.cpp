@@ -83,4 +83,17 @@ DXGI_MODE_DESC D3D12Helper::DxgiMode(
 	return modeDesc;
 }
 
+void D3D12Helper::MakeFenceWaitFor(ID3D12Fence * pFence, UINT64 expectValue)
+{
+	if (pFence->GetCompletedValue() < expectValue)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+		
+		pFence->SetEventOnCompletion(expectValue, eventHandle);
+		
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
+}
+
 }// namespace EyeEngine

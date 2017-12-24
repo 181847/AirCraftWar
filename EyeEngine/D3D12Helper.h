@@ -21,7 +21,9 @@ public:
 
 	// Create a swapChain throw a DxException when failed.
 	// for bufferDesc, you can use function DxgiMode(...).
-	static void CreateSwapChain(
+	static void CreateSwapChain
+#pragma region CreateSwapChain function args
+	(
 		IDXGIFactory4* pDxgiFactory,
 		ID3D12CommandQueue* pCmdQueue,
 		IDXGISwapChain** ppSwapChain,
@@ -33,12 +35,20 @@ public:
 		DXGI_USAGE bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 		DXGI_SWAP_EFFECT swapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
 		UINT flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+#pragma endregion
 
-	static DXGI_MODE_DESC DxgiMode(
+	// help generate the DXGI_MODE_DESC structure.
+	static DXGI_MODE_DESC DxgiMode
+#pragma region DxgiMode function args
+	(
 		DXGI_FORMAT format, UINT width, UINT height, 
 		UINT refreshRate_Numerator = 60, UINT refreshRate_Demominator = 1, 
 		DXGI_MODE_SCANLINE_ORDER scanlingOrder = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, 
 		DXGI_MODE_SCALING scanling = DXGI_MODE_SCALING_UNSPECIFIED);
+#pragma endregion
+
+	// Block the fence until its value reach the expectValue
+	static void MakeFenceWaitFor(ID3D12Fence* pFence, UINT64 expectValue);
 
 };
 }
