@@ -245,7 +245,10 @@ void GameWindow::CreateSwapChain()
 
 void GameWindow::FlushCommandQueue()
 {
-	
+	_currentFence++;
+	ThrowIfFailed(_commandQueue->Signal(_fence.Get(), _currentFence));
+
+	D3D12Helper::MakeFenceWaitFor(_fence.Get(), _currentFence);
 }
 
 LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
