@@ -5,7 +5,8 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-class LocationComponent
+// Present to 2D Position and a quaternion for Rotation
+class Location2DComponent
 	:public ECS::BaseComponent
 {
 public:
@@ -22,6 +23,7 @@ public:
 	XMFLOAT4 _quatRotation;
 };
 
+// 2D bounding box
 class Bound2DBoxComponent
 	:public ECS::BaseComponent
 {
