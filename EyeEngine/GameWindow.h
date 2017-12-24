@@ -85,7 +85,7 @@ protected:
 	GameTimer _timer;
 
 	Microsoft::WRL::ComPtr<IDXGIFactory4> _dxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> _SwapChain;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> _swapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> _d3dDevice;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
@@ -95,7 +95,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _commandList;
 
-	static const int _swapChainBufferCount = 2;
+	static const UINT _swapChainBufferCount = 2;
 	UINT _currBackBuffer = 0;
 	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[_swapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> _depthStencilBuffer;
