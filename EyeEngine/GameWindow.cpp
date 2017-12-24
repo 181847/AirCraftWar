@@ -102,10 +102,10 @@ bool GameWindow::Initialize()
 		return false;
 	}
 
-	/*if ( ! InitDirect3D())
+	if (!InitDirect3D())
 	{
 		return false;
-	}*/
+	}
 
 	// init the swapChain.
 	OnResize();
@@ -211,8 +211,9 @@ bool GameWindow::InitDirect3D()
 
 	CreateCommandObjects();
 	CreateSwapChain();
+	CreateRtvAndDsvDescriptorHeaps();
 
-	return false;
+	return true;
 }
 
 void GameWindow::CreateCommandObjects()
@@ -238,7 +239,7 @@ void GameWindow::CreateSwapChain()
 
 	D3D12Helper::CreateSwapChain(
 		_dxgiFactory.Get(), _commandQueue.Get(), 
-		_SwapChain.GetAddressOf(),
+		_swapChain.GetAddressOf(),
 		_hMainWnd, 
 		D3D12Helper::DxgiMode(_backBufferFormat, _clientWidth, _clientHeight), 
 		sampleDesc);
@@ -425,7 +426,101 @@ void GameWindow::CreateRtvAndDsvDescriptorHeaps()
 
 void GameWindow::OnResize()
 {
-	// TODO: implement the OnResize .
+	assert(_d3dDevice);
+	assert(_swapChain);
+	assert(_directCmdListAlloc);
+
+	// Flush before changing any resources.
+	FlushCommandQueue();
+
+	ThrowIfFailed(_commandList->Reset(_directCmdListAlloc.Get(), nullptr));
+
+#pragma region Resize SwapChain
+	for (UINT i = 0; i < _swapChainBufferCount; ++i)
+	{
+		_swapChainBuffer[i].Reset();
+	}
+	_depthStencilBuffer.Reset();
+
+	ThrowIfFailed(_swapChain->ResizeBuffers(
+		_swapChainBufferCount, 
+		_clientWidth, _clientHeight, 
+		_backBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
+
+	_currBackBuffer = 0;
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	for (UINT i = 0; i < _swapChainBufferCount; ++i)
+	{
+		ThrowIfFailed(_swapChain->GetBuffer(i, IID_PPV_ARGS(_swapChainBuffer[i].GetAddressOf())));
+		_d3dDevice->CreateRenderTargetView(_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
+		rtvHeapHandle.Offset(1, _rtvDescriptorSize);
+	}
+#pragma endregion
+
+#pragma region Resize DepthStencilBuffer
+	D3D12_RESOURCE_DESC depthStencilDesc;
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Alignment = 0;
+	depthStencilDesc.Width = _clientWidth;
+	depthStencilDesc.Height = _clientHeight;
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+
+	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
+	// the depth buffer.  Therefore, because we need to create two views to the same resource:
+	//   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
+	//   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
+	// we need to create the depth buffer resource with a typeless format.  
+	depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+
+	depthStencilDesc.SampleDesc.Count = _4xMsaaState ? 4 : 1;
+	depthStencilDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE optClear;
+	optClear.Format = _depthStencilFormat;
+	optClear.DepthStencil.Depth = 1.0f;
+	optClear.DepthStencil.Stencil = 0;
+	ThrowIfFailed(_d3dDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&depthStencilDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		&optClear,
+		IID_PPV_ARGS(_depthStencilBuffer.GetAddressOf())));
+
+	// Create descriptor to mip level 0 of entire resource using the format of the resource.
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Format = _depthStencilFormat;
+	dsvDesc.Texture2D.MipSlice = 0;
+	_d3dDevice->CreateDepthStencilView(_depthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
+#pragma endregion
+
+	// change the _depthStencilBuffer state
+	_commandList->ResourceBarrier(1, 
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_depthStencilBuffer.Get(), 
+			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON, 
+			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+	ThrowIfFailed(_commandList->Close());
+	ID3D12CommandList* cmdsList[] = {_commandList.Get()};
+	_commandQueue->ExecuteCommandLists(1, cmdsList);
+	FlushCommandQueue();
+
+	// Update the viewport transform to cover the client area.
+	_screenViewport.TopLeftX = 0;
+	_screenViewport.TopLeftY = 0;
+	_screenViewport.Width = static_cast<float>(_clientWidth);
+	_screenViewport.Height = static_cast<float>(_clientHeight);
+	_screenViewport.MinDepth = 0.0f;
+	_screenViewport.MaxDepth = 1.0f;
+
+	_scissorRect = { 0, 0, _clientWidth, _clientHeight };
 }
 
 void GameWindow::CalculateFrameStats()
