@@ -2,6 +2,7 @@
 #include <WindowsX.h>
 #include <MyTools/MyAssert.h>
 #include <iostream>
+#include <string>
 #include "DescriptorHeapHelper.h"
 #include "D3D12Helper.h"
 
@@ -81,7 +82,7 @@ int GameWindow::Run()
 
 			if ( ! _gamePaused)
 			{
-				//CalculateFrameStats();
+				CalculateFrameStats();
 				//Update(_timer);
 				//Draw(_timer);
 			}
@@ -251,6 +252,29 @@ void GameWindow::FlushCommandQueue()
 	D3D12Helper::MakeFenceWaitFor(_fence.Get(), _currentFence);
 }
 
+void GameWindow::SetGameWindowText(const std::wstring & title)
+{
+	SetWindowText(_hMainWnd, title.c_str());
+}
+
+ID3D12Resource * GameWindow::CurrentBackBuffer() const
+{
+	return _swapChainBuffer[_currBackBuffer].Get();
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE GameWindow::CurrentBackBufferView() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		_rtvHeap->GetCPUDescriptorHandleForHeapStart(), 
+		_currBackBuffer, 
+		_rtvDescriptorSize);
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE GameWindow::DepthStencilView() const
+{
+	return _dsvHeap->GetCPUDescriptorHandleForHeapStart();
+}
+
 LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -404,6 +428,29 @@ void GameWindow::OnResize()
 	// TODO: implement the OnResize .
 }
 
+void GameWindow::CalculateFrameStats()
+{
+	static unsigned int frameCount = 0;
+	static float timeElapsed = 0.0f;
+
+	++frameCount;
+	
+	if ((_timer.TotalTime() - timeElapsed) >= 1.0f)
+	{
+		float fps = (float)frameCount;
+		float mspf = 1000.0f / fps;
+
+		std::wstring fpsStr = std::to_wstring(fps);
+		std::wstring mspfStr = std::to_wstring(mspf);
+
+		SetGameWindowText(
+			L"    fps: " + fpsStr + 
+			L"   mspf: " + mspfStr);
+
+		frameCount = 0;
+		timeElapsed += 1.0f;
+	}
+}
 
 void GameWindow::LogAdapters()
 {

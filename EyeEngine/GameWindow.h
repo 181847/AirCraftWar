@@ -53,6 +53,8 @@ protected:
 
 	void FlushCommandQueue();
 
+	void SetGameWindowText(const std::wstring& title);
+
 	ID3D12Resource* CurrentBackBuffer()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
@@ -94,7 +96,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _commandList;
 
 	static const int _swapChainBufferCount = 2;
-	int _currBackBuffer = 0;
+	UINT _currBackBuffer = 0;
 	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[_swapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> _depthStencilBuffer;
 
