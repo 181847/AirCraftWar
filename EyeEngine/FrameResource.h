@@ -8,6 +8,7 @@ namespace EyeEngine
 {
 
 #pragma region Frame Resource Structures
+// [ world position, materialIndexs]
 struct InstanceData
 {
 	DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
@@ -17,6 +18,7 @@ struct InstanceData
 	UINT InstancePad2;
 };
 
+// [Matrix about camera, Lights, GameTime]
 struct PassConstants
 {
 	DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
@@ -58,8 +60,6 @@ struct MaterialData
 	UINT MaterialPad2;
 };
 
-#pragma endregion
-
 template<typename GEOMETRY_TYPE>
 struct InstanceSet
 {
@@ -71,6 +71,7 @@ public:
 
 	InstanceSet(ID3D12Device* pDevice, GEOMETRY_TYPE* pGeo, UINT maxInstanceCount);
 };
+#pragma endregion
 
 #pragma region InstanceSet functions
 
@@ -86,6 +87,7 @@ inline InstanceSet<GEOMETRY_TYPE>::InstanceSet(ID3D12Device* pDevice, GEOMETRY_T
 class FrameResource
 {
 public:
+	UINT64 _fenceValue;
 	// unique command allocator
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _cmdAlloca;
 	// all the instance for each geometry
@@ -100,8 +102,6 @@ public:
 public:
 	FrameResource(
 		ID3D12Device * pDevice, 
-		const std::vector<MeshGeometry*>&	geos, 
-		const std::vector<UINT>&			maxInstancePerGeo, 
 		UINT materialCount);
 	~FrameResource();
 
