@@ -173,7 +173,7 @@ bool GameWindow::InitDirect3D()
 		D3D_FEATURE_LEVEL_11_0,
 		IID_PPV_ARGS(&_d3dDevice));
 
-	// Fallback to WARP device.
+	// Callback to WARP device.
 	if (FAILED(hardwareResult))
 	{
 		ComPtr<IDXGIAdapter> pWarpAdapter;
