@@ -18,23 +18,36 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12Device> _d3dDevice;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
-	UINT64 _currentFence = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> _commandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _commandList;
-
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
-
-	D3D12_VIEWPORT _screenViewport;
-	D3D12_RECT _scissorRect;
 
 	UINT _rtvDescriptorSize = 0;
 	UINT _dsvDescriptorSize = 0;
 	UINT _cbvSrvUavDescriptorSize = 0;
 
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
+#pragma endregion
+
+	// notice:
+	// This is a reference, should be init as the RenderSystem created.
+	UINT64&					_currFence = 0;
+
+#pragma region variables about frameResources
+	const UINT _numFrameResource;
+	std::vector<std::unique_ptr<FrameResource>> _frameResources;
+	// the current frame resource Index
+
+	UINT _currFrameResourceIndex = 0;
+#pragma endregion
+
+#pragma region variables about Window usage such as [swapChain, viewPort, wndWidth]
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
+
+	D3D12_VIEWPORT _screenViewport;
+	D3D12_RECT _scissorRect;
 	DXGI_FORMAT _backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT _depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	int _clientWidth = 800;
@@ -49,24 +62,13 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
 #pragma endregion
 
-	// notice:
-	// This is a reference, should be init as the RenderSystem created.
-	UINT64&					_currFence;
-
-#pragma region variables about frameResources
-	const UINT _numFrameResource;
-	std::vector<std::unique_ptr<FrameResource>> _frameResources;
-	// the current frame resource Index
-
-	UINT _currFrameResourceIndex = 0;
-#pragma endregion
-
 public:
 	RenderSystem();
 
 	DELETE_COPY_CONSTRUCTOR(RenderSystem)
 	~RenderSystem();
 
+#pragma region  functions about common D3DObjects operation.
 	// Create [dxgiFactory, d3dDevice, fence].
 	// Get the multiSample support.
 	// Throw DxException when failed.
@@ -77,6 +79,7 @@ public:
 
 	// Wait CommandQueue to reach a spcific point.
 	void FlushCommandQueue();
+#pragma endregion
 
 #pragma region functions for logging adapter and output display modes
 	void LogAdapters();
