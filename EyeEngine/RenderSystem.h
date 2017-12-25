@@ -13,7 +13,7 @@ protected:
 #pragma region variables about D3D12 Objects
 	ID3D12Device*			_device;
 	ID3D12CommandQueue*		_cmdQueue;
-	ID3D12CommandList*		_cmdList;
+	ID3D12GraphicsCommandList*	_cmdList;
 	ID3D12Fence*			_fence;
 #pragma endregion
 
@@ -35,7 +35,7 @@ public:
 		UINT					frameResourceCount,
 		ID3D12Device*			pDevice,
 		ID3D12CommandQueue*		pCmdQueue,
-		ID3D12CommandList*		pCmdList,
+		ID3D12GraphicsCommandList*	pCmdList,
 		ID3D12Fence*			pFence,
 		UINT64&					currFence,
 		const UINT				materialCount
@@ -45,7 +45,7 @@ public:
 	DELETE_COPY_CONSTRUCTOR(RenderSystem)
 	~RenderSystem();
 
-	// update [lights, cameras, new instance, instance pose],
+	// update [lights, cameras, new instance, change instance pose],
 	// change to another FrameResource to get 
 	void Update(GameTimer& gt);
 
@@ -55,7 +55,7 @@ public:
 protected:
 	// Switch to the next frameResource, 
 	// and ready to store new data.
-	// Block the thread if the last frameResource is still in use.
+	// Block the thread if the new frameResource is still in use.
 	void TickFrameResource();
 
 	// Get the FrameResource with the index _currFrameResourceIndex.
