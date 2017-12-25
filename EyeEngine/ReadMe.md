@@ -3,6 +3,15 @@
 
 大部分的窗口创建代码来自 **《Introduction to 3D Game Programming with DirectX12 》**
 
+## 日志记录功能
+```c++
+#include "EyeLogger.h"
+LOG_DEBUG("测试用调试信息")；
+LOG_INFO("测试用日志信息")；
+LOG_WARN("测试用警告信息")；
+LOG_FATAL("测试用致命错误信息")；
+```
+
 ## Systems
 System  |   职能
 --------|---------
