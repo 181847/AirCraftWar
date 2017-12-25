@@ -9,7 +9,6 @@ namespace EyeEngine
 
 // The RenderSystem take responsibility of the original window creation operation,
 // the RenderSystem go to make all the D3DObjects.
-// 
 class RenderSystem
 {
 protected:
@@ -71,10 +70,22 @@ public:
 	// Create [dxgiFactory, d3dDevice, fence].
 	// Get the multiSample support.
 	// Throw DxException when failed.
-	void CreateBaseD3DOjbects();
+	void CreateBasicD3DOjbects();
+
+	// Create [cmdQueue, cmdAllocator, cmdList].
+	void CreateCommandObjects();
 
 	// Wait CommandQueue to reach a spcific point.
 	void FlushCommandQueue();
+
+#pragma region functions for logging adapter and output display modes
+	void LogAdapters();
+
+	void LogAdapterOutputs(IDXGIAdapter);
+
+	void LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT format);
+#pragma endregion
+
 
 #pragma region Window functions
 	// Create a SwapChain for the windowed application.
@@ -108,10 +119,10 @@ protected:
 	// Switch to the next frameResource, 
 	// and ready to store new data.
 	// Block the thread if the new frameResource is still in use.
-	void TickFrameResource();
+	void WindowTickFrameResource();
 
 	// Get the FrameResource with the index _currFrameResourceIndex.
-	FrameResource* GetCurrentFrameResouce();
+	FrameResource* WindowGetCurrentFrameResouce();
 };
 
 }// namespace EyeEngine
