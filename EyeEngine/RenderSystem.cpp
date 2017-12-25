@@ -6,8 +6,8 @@ namespace EyeEngine
 RenderSystem::RenderSystem(
 	UINT frameResourceCount, 
 	ID3D12Device*	pDevice,
-	ID3D12CommandQueue * pCmdQueue, 
-	ID3D12CommandList * pCmdList, 
+	ID3D12CommandQueue * pCmdQueue,
+	ID3D12GraphicsCommandList*	pCmdList,
 	ID3D12Fence * pFence, 
 	UINT64 & currFence,
 	const UINT materialCount)
@@ -27,6 +27,19 @@ RenderSystem::RenderSystem(
 
 RenderSystem::~RenderSystem()
 {
+}
+
+void RenderSystem::Draw(GameTimer & gt)
+{
+	// Because the Update is called before Draw(gt),
+	// so the commandAllocator of current FrameResource is no use,
+	// we can reset it as desired.
+	auto currFrameCmdAlloc = GetCurrentFrameResouce()->_cmdAlloca;
+
+	ThrowIfFailed(currFrameCmdAlloc->Reset());
+
+	ThrowIfFailed(_cmdList->Reset(currFrameCmdAlloc.Get(), nullptr));
+	
 }
 
 void RenderSystem::TickFrameResource()
