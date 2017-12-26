@@ -77,13 +77,11 @@ protected:
 	bool      _resizing = false;   // are the resize bars being dragged?
 	bool      _fullscreenState = false;// fullscreen enabled
 
-									   // Set true to use 4X MSAA (?.1.8).  The default is false.
-	bool      _4xMsaaState = false;    // 4X MSAA enabled
-	UINT      _4xMsaaQuality = 0;      // quality level of 4X MSAA
 
 									   // Used to keep track of the “delta-time?and game time (?.4).
 	GameTimer _timer;
 
+	std::wstring _mainWndCaption = L"MainWindow";
 
 	int _clientWidth = 800;
 	int _clientHeight = 600;
