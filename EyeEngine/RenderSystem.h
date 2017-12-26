@@ -83,9 +83,6 @@ public:
 	// Create [cmdQueue, cmdAllocator, cmdList].
 	void CreateCommandObjects();
 
-	// check the multiSample support
-	void CheckMultiSampleSupport();
-
 	// Wait CommandQueue to reach a specific point.
 	void FlushCommandQueue();
 #pragma endregion
@@ -99,6 +96,12 @@ public:
 #pragma endregion
 
 #pragma region Window functions
+	// for the back buffer and depthStencil buffer's creation.
+	DXGI_SAMPLE_DESC WindowSampleDesc();
+
+	// check the multiSample support for BackBuffer
+	void WindowCheckMultiSampleSupport();
+
 	// Create a SwapChain for the windowed application.
 	void WindowCreateSwapChain(HWND hWindow);
 
