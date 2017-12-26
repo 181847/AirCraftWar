@@ -13,24 +13,22 @@ class RenderSystem
 {
 protected:
 #pragma region variables about D3D12 Objects
-	Microsoft::WRL::ComPtr<IDXGIFactory4> _dxgiFactory;
-	Microsoft::WRL::ComPtr<ID3D12Device> _d3dDevice;
+	Microsoft::WRL::ComPtr<IDXGIFactory4>	_dxgiFactory;
+	Microsoft::WRL::ComPtr<ID3D12Device>	_d3dDevice;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
+	Microsoft::WRL::ComPtr<ID3D12Fence>		_fence;
 
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> _cmdQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdAlloc;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _cmdList;
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue>			_cmdQueue;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		_directCmdAlloc;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	_cmdList;
 
-	UINT _rtvDescriptorSize = 0;
-	UINT _dsvDescriptorSize = 0;
-	UINT _cbvSrvUavDescriptorSize = 0;
+	UINT _rtvDescriptorSize			= 0;
+	UINT _dsvDescriptorSize			= 0;
+	UINT _cbvSrvUavDescriptorSize	= 0;
 
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 #pragma endregion
 
-	// notice:
-	// This is a reference, should be init as the RenderSystem created.
 	UINT64					_currFenceValue = 0;
 
 #pragma region variables about frameResources
@@ -64,7 +62,6 @@ protected:
 
 public:
 	RenderSystem();
-
 	DELETE_COPY_CONSTRUCTOR(RenderSystem)
 	~RenderSystem();
 
@@ -77,7 +74,7 @@ public:
 	// Create [cmdQueue, cmdAllocator, cmdList].
 	void CreateCommandObjects();
 
-	// Wait CommandQueue to reach a spcific point.
+	// Wait CommandQueue to reach a specific point.
 	void FlushCommandQueue();
 #pragma endregion
 
@@ -115,8 +112,6 @@ public:
 
 	// Commit drawing command to command queue and execute it.
 	void WindowDraw(GameTimer& gt);
-#pragma endregion
-
 
 protected:
 	// Switch to the next frameResource, 
@@ -126,6 +121,8 @@ protected:
 
 	// Get the FrameResource with the index _currFrameResourceIndex.
 	FrameResource* WindowGetCurrentFrameResouce();
+#pragma endregion
+
 };
 
 }// namespace EyeEngine
