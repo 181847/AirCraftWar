@@ -75,28 +75,66 @@ void RenderSystem::LogAdapters()
 	}
 }
 
-void RenderSystem::Draw(GameTimer & gt)
+void RenderSystem::LogAdapterOutputs(IDXGIAdapter * pAdapter)
 {
-	// Because the Update is called before Draw(gt),
-	// so the commandAllocator of current FrameResource is no use,
-	// we can reset it as desired.
-	auto currFrameCmdAlloc = GetCurrentFrameResouce()->_cmdAlloca;
+	UINT i = 0;
+	IDXGIOutput* output = nullptr;
+	while (pAdapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
+	{
+		DXGI_OUTPUT_DESC desc;
+		output->GetDesc(&desc);
 
-	ThrowIfFailed(currFrameCmdAlloc->Reset());
+		std::wstring text = L"***Output: ";
+		text += desc.DeviceName;
+		text += L"\n";
+		LOG_INFO(text);
 
-	ThrowIfFailed(_cmdList->Reset(currFrameCmdAlloc.Get(), nullptr));
-	
+		LogOutputDisplayModes(output, _backBufferFormat);
+
+		ReleaseCom(output);
+
+		++i;
+	}
 }
 
-void RenderSystem::TickFrameResource()
+void RenderSystem::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT format)
+{
+	UINT count = 0;
+	UINT flags = 0;
+
+	// Call with nullptr to get list count.
+	output->GetDisplayModeList(format, flags, &count, nullptr);
+
+	std::vector<DXGI_MODE_DESC> modeList(count);
+	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
+
+	for (auto& x : modeList)
+	{
+		UINT n = x.RefreshRate.Numerator;
+		UINT d = x.RefreshRate.Denominator;
+		std::wstring text =
+			L"Width = " + std::to_wstring(x.Width) + L" " +
+			L"Height = " + std::to_wstring(x.Height) + L" " +
+			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
+			L"\n";
+
+		LOG_INFO(text);
+	}
+}
+
+void RenderSystem::WindowDraw(GameTimer & gt)
+{
+}
+
+void RenderSystem::WindowTickFrameResource()
 {
 	_currFrameResourceIndex = (_currFrameResourceIndex + 1) % _numFrameResource;
 
 	D3D12Helper::MakeFenceWaitFor(
-		_fence, GetCurrentFrameResouce()->_fenceValue);
+		_fence.Get(), WindowGetCurrentFrameResouce()->_fenceValue);
 }
 
-FrameResource * RenderSystem::GetCurrentFrameResouce()
+FrameResource * RenderSystem::WindowGetCurrentFrameResouce()
 {
 	return _frameResources[_currFrameResourceIndex].get();
 }
