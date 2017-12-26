@@ -29,9 +29,12 @@ D3D12Helper::CreateCommandAllocator(
 
 void 
 D3D12Helper::CreateCommandList(
-	ID3D12Device * pDevice, ID3D12GraphicsCommandList ** ppCmdList,
-	D3D12_COMMAND_LIST_TYPE type, ID3D12CommandAllocator * pAllco, 
-	UINT nodeMask, ID3D12PipelineState * pInitPSO)
+	ID3D12Device *					pDevice,
+	ID3D12CommandAllocator *		pAllco, 
+	ID3D12GraphicsCommandList **	ppCmdList,
+	D3D12_COMMAND_LIST_TYPE			type,  
+	UINT							nodeMask, 
+	ID3D12PipelineState *			pInitPSO)
 {
 	ThrowIfFailed(pDevice->CreateCommandList(
 		nodeMask,
@@ -64,6 +67,12 @@ void D3D12Helper::CreateSwapChain(
 	scDesc.Flags = flags;
 
 	ThrowIfFailed(pDxgiFactory->CreateSwapChain(pCmdQueue, &scDesc, ppSwapChain));
+}
+
+void D3D12Helper::CreateFence(ID3D12Device * pDevice, ID3D12Fence** ppFence, UINT64 initValue, D3D12_FENCE_FLAGS flags)
+{
+	ThrowIfFailed(pDevice->CreateFence(
+		initValue, flags, IID_PPV_ARGS(ppFence)));
 }
 
 DXGI_MODE_DESC D3D12Helper::DxgiMode(
