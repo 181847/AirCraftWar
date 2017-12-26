@@ -1,9 +1,14 @@
 #include "RenderSystem.h"
 #include "D3D12Helper.h"
 #include "EyeLogger.h"
+#include <iostream>
 
 namespace EyeEngine
 {
+RenderSystem::RenderSystem(UINT numFrameResources)
+	:_numFrameResource(numFrameResources)
+{
+}
 
 RenderSystem::~RenderSystem()
 {
@@ -13,6 +18,7 @@ void RenderSystem::InitD3DCommon()
 {
 	CreateBasicD3DOjbects();
 	CreateCommandObjects();
+	InitDescriptorSizes();
 	LogAdapters();
 }
 
@@ -38,11 +44,27 @@ void RenderSystem::CreateBasicD3DOjbects()
 
 }
 
+void RenderSystem::InitDescriptorSizes()
+{
+	_rtvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	_dsvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	_cbvSrvUavDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
 void RenderSystem::CreateCommandObjects()
 {
 	D3D12Helper::CreateCommandQueue(_d3dDevice.Get(), _cmdQueue.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 	D3D12Helper::CreateCommandAllocator(_d3dDevice.Get(), _directCmdAlloc.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 	D3D12Helper::CreateCommandList(_d3dDevice.Get(), _directCmdAlloc.Get(), _cmdList.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+	_cmdList->Close();
+}
+
+void RenderSystem::WindowInit(HWND hWindow, UINT width, UINT height)
+{
+	WindowCreateSwapChain(hWindow, width, height);
+	WindowCreateRtvAndDsvDescriptorHeaps();
+	// force to create backBuffer and depthStencilBuffer.
+	WindowOnResize(width, height);
 }
 
 DXGI_SAMPLE_DESC RenderSystem::WindowSampleDesc()
@@ -59,8 +81,11 @@ void RenderSystem::WindowCheckMultiSampleSupport()
 	ASSERT(_4xMsaaQuality > 0 && "Unexpected multiSample quality");
 }
 
-void RenderSystem::WindowCreateSwapChain(HWND hWindow)
+void RenderSystem::WindowCreateSwapChain(HWND hWindow, UINT width, UINT height)
 {
+	_clientWidth	= width;
+	_clientHeight	= height;
+
 	WindowCheckMultiSampleSupport();
 	DXGI_SAMPLE_DESC sampleDesc;
 	sampleDesc.Count = _4xMsaaState ? 4 : 1;
@@ -69,7 +94,7 @@ void RenderSystem::WindowCreateSwapChain(HWND hWindow)
 	D3D12Helper::CreateSwapChain(
 		_dxgiFactory.Get(), _cmdQueue.Get(), _swapChain.GetAddressOf(), 
 		hWindow,
-		D3D12Helper::DxgiMode(_backBufferFormat, _clientWidth, _clientHeight),
+		D3D12Helper::DxgiMode(_backBufferFormat, width, height),
 		sampleDesc, _swapChainBufferCount);
 }
 
@@ -106,12 +131,23 @@ void RenderSystem::WindowCreateRtvAndDsvDescriptorHeaps()
 
 void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 {
-	assert(_dxgiFactory);
+	assert(_swapChain);
 	assert(_d3dDevice);
-	assert(_cmdQueue);
+	assert(_directCmdAlloc);
+
+	FlushCommandQueue();
+
+	ThrowIfFailed(_directCmdAlloc->Reset());
+	ThrowIfFailed(_cmdList->Reset(_directCmdAlloc.Get(), nullptr));
 
 	_clientWidth = newWidth;
 	_clientHeight = newHeight;
+
+	for (int i = 0; i < _swapChainBufferCount; ++i)
+	{
+		_swapChainBuffer[i].Reset();
+	}
+	_depthStencilBuffer.Reset();
 	
 	// resize backBuffer.
 	ThrowIfFailed(
@@ -119,19 +155,18 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 			_swapChainBufferCount, 
 			newWidth, newHeight, 
 			_backBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
+	//_currBackBuffer = 0;
 
 	// clear back buffer's resources and rebuild them.
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandler(_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (int i = 0; i < _swapChainBufferCount; ++i)
 	{
-		_swapChainBuffer[i].Reset();
 		ThrowIfFailed(_swapChain->GetBuffer(i, IID_PPV_ARGS(_swapChainBuffer[i].GetAddressOf())));
 		_d3dDevice->CreateRenderTargetView(_swapChainBuffer[i].Get(), nullptr, rtvHeapHandler);
 		rtvHeapHandler.Offset(1, _rtvDescriptorSize);
 	}
 
 #pragma region rebuild depthStencilBuffer
-	_depthStencilBuffer.Reset();
 	D3D12_RESOURCE_DESC depthStencilRecouceDesc;
 	depthStencilRecouceDesc.Alignment = 0;
 	depthStencilRecouceDesc.DepthOrArraySize = 1;
@@ -174,7 +209,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	// execute all the commands
 	ThrowIfFailed(_cmdList->Close());
 	ID3D12CommandList* cmdList[] = { _cmdList.Get() };
-	_cmdQueue->ExecuteCommandLists(_countof(cmdList), cmdList);
+	_cmdQueue->ExecuteCommandLists(1, cmdList);
 	FlushCommandQueue();
 
 	// Update the viewport transform to cover the client area.
@@ -186,7 +221,21 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	_screenViewport.MaxDepth = 1.0f;
 
 	_scissorRect = { 0, 0, _clientWidth, _clientHeight };
+}
 
+void RenderSystem::WindowSet4xMsaaState(bool value)
+{
+	_4xMsaaState = value;
+}
+
+bool RenderSystem::WindowGet4xMsaaState()
+{
+	return _4xMsaaState;
+}
+
+float RenderSystem::WindowAspectRation()
+{
+	return static_cast<float>(_clientWidth) / _clientHeight;
 }
 
 void RenderSystem::FlushCommandQueue()
@@ -195,6 +244,11 @@ void RenderSystem::FlushCommandQueue()
 	_cmdQueue->Signal(_fence.Get(), _currFenceValue);
 	
 	D3D12Helper::MakeFenceWaitFor(_fence.Get(), _currFenceValue);
+}
+
+bool RenderSystem::IsDeviceCreated()
+{
+	return _d3dDevice != nullptr;
 }
 
 void RenderSystem::LogAdapters()
@@ -271,6 +325,47 @@ void RenderSystem::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT forma
 
 		LOG_INFO(text);
 	}
+}
+
+void RenderSystem::WindowDraw(GameTimer & gt)
+{
+	ThrowIfFailed(_directCmdAlloc->Reset());
+	_cmdList->Reset(_directCmdAlloc.Get(), nullptr);
+	
+	_cmdList->RSSetViewports(1, &_screenViewport);
+	_cmdList->RSSetScissorRects(1, &_scissorRect);
+	auto currBackBuffer = WindowGetCurrentBackBuffer();
+
+	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+			currBackBuffer, 
+			D3D12_RESOURCE_STATE_PRESENT, 
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	float redChannelForTime = 0.5f + 0.5f * sin(gt.TotalTime());
+	FLOAT color[4] = {  redChannelForTime, 0.0f, 0.0f, 1.0f };
+	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), color, 0, nullptr);
+	_cmdList->ClearDepthStencilView(WindowDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
+	_cmdList->OMSetRenderTargets(1, &WindowCurrentBackBufferView(), true, &WindowDepthStencilView());
+	
+	
+	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		currBackBuffer,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT));
+
+	ThrowIfFailed(_cmdList->Close());
+	ID3D12CommandList* cmdLists[] = { _cmdList.Get() };
+	_cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+	ThrowIfFailed(_swapChain->Present(0, 0));
+
+	WindowTickSwapChain();
+	FlushCommandQueue();
+}
+
+void RenderSystem::WindowTickSwapChain()
+{
+	_currBackBuffer = (_currBackBuffer + 1) % _swapChainBufferCount;
 }
 
 void RenderSystem::WindowTickFrameResource()
