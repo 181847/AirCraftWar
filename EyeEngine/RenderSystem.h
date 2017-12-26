@@ -29,23 +29,29 @@ protected:
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 #pragma endregion
 
-
 #pragma region D3D12 Status variabls
+	UINT64		_currFenceValue = 0;
+
+#pragma region variables about Window usage such as [swapChain, viewPort, wndWidth, ...]
+
+#pragma region variables about frameResources
+	// the current frame resource Index
+	UINT		_currFrameResourceIndex = 0;
+	const UINT	_numFrameResource;
+	std::vector<std::unique_ptr<FrameResource>> _frameResources;
+#pragma endregion
 										// Set true to use 4X MSAA (?.1.8).  The default is false.
 	bool		_4xMsaaState = false;	// 4X MSAA enabled
 	UINT		_4xMsaaQuality = 0;		// quality level of 4X MSAA
-	UINT64		_currFenceValue = 0;
 
-#pragma region variables about frameResources
-	const UINT _numFrameResource;
-	std::vector<std::unique_ptr<FrameResource>> _frameResources;
-	// the current frame resource Index
+	static const UINT _swapChainBufferCount = 2;
+	UINT _currBackBuffer = 0;
 
-	UINT _currFrameResourceIndex = 0;
-#pragma endregion
-
-#pragma region variables about Window usage such as [swapChain, viewPort, wndWidth]
 	Microsoft::WRL::ComPtr<IDXGISwapChain> _swapChain;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[_swapChainBufferCount];
+	Microsoft::WRL::ComPtr<ID3D12Resource> _depthStencilBuffer;
+
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
 
@@ -56,17 +62,10 @@ protected:
 	int _clientWidth = 800;
 	int _clientHeight = 600;
 
-	static const UINT _swapChainBufferCount = 2;
-	UINT _currBackBuffer = 0;
-	Microsoft::WRL::ComPtr<ID3D12Resource> _swapChainBuffer[_swapChainBufferCount];
-	Microsoft::WRL::ComPtr<ID3D12Resource> _depthStencilBuffer;
-
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
 #pragma endregion
 
 public:
-	RenderSystem();
+	RenderSystem(UINT numFrameResources = 3);
 	DELETE_COPY_CONSTRUCTOR(RenderSystem)
 	~RenderSystem();
 
@@ -80,11 +79,17 @@ public:
 	// Throw DxException when failed.
 	void CreateBasicD3DOjbects();
 
+	// Get rtv/dsv/cbv... descriptor size from _d3dDevice.
+	void InitDescriptorSizes();
+
 	// Create [cmdQueue, cmdAllocator, cmdList].
 	void CreateCommandObjects();
 
 	// Wait CommandQueue to reach a specific point.
 	void FlushCommandQueue();
+
+	// Return whether the device has been created.
+	bool IsDeviceCreated();
 #pragma endregion
 
 #pragma region functions for logging adapter and output display modes
@@ -96,6 +101,9 @@ public:
 #pragma endregion
 
 #pragma region Window functions
+	// Initialize the window's objects.
+	void WindowInit(HWND hWindow, UINT width, UINT height);
+
 	// for the back buffer and depthStencil buffer's creation.
 	DXGI_SAMPLE_DESC WindowSampleDesc();
 
@@ -103,7 +111,7 @@ public:
 	void WindowCheckMultiSampleSupport();
 
 	// Create a SwapChain for the windowed application.
-	void WindowCreateSwapChain(HWND hWindow);
+	void WindowCreateSwapChain(HWND hWindow, UINT width, UINT height);
 
 	// For a window application, get the backBuffer resource.
 	ID3D12Resource* WindowGetCurrentBackBuffer();
@@ -121,14 +129,23 @@ public:
 	// resize the swapChain and corresponding depthStencil buffer
 	void WindowOnResize(int newWidth, int newHeight);
 
+	void WindowSet4xMsaaState(bool value);
+	bool WindowGet4xMsaaState();
+
+	float WindowAspectRation();
+
 	// update [lights, cameras, new instance, change instance pose],
 	// change to another FrameResource to get 
-	void WindowUpdate(GameTimer& gt);
+	//void WindowUpdate(GameTimer& gt);
 
 	// Commit drawing command to command queue and execute it.
+	// For test, just reset the swapChains buffer with different color.
 	void WindowDraw(GameTimer& gt);
 
 protected:
+	// Switch to the next backBuffer, by adding one to the _currBackBuffer.
+	void WindowTickSwapChain();
+
 	// Switch to the next frameResource, 
 	// and ready to store new data.
 	// Block the thread if the new frameResource is still in use.
