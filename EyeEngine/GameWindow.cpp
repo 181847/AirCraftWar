@@ -63,6 +63,31 @@ void GameWindow::Set4xMsaaState(bool value)
 	_4xMsaaState = value;
 }
 
+
+void GameWindow::CalculateFrameStats()
+{
+	static unsigned int frameCount = 0;
+	static float timeElapsed = 0.0f;
+
+	++frameCount;
+
+	if ((_timer.TotalTime() - timeElapsed) >= 1.0f)
+	{
+		float fps = (float)frameCount;
+		float mspf = 1000.0f / fps;
+
+		std::wstring fpsStr = std::to_wstring(fps);
+		std::wstring mspfStr = std::to_wstring(mspf);
+
+		SetGameWindowText(
+			L"    fps: " + fpsStr +
+			L"   mspf: " + mspfStr);
+
+		frameCount = 0;
+		timeElapsed += 1.0f;
+	}
+}
+
 int GameWindow::Run()
 {
 	MSG msg = { 0 };
@@ -98,11 +123,6 @@ int GameWindow::Run()
 bool GameWindow::Initialize()
 {
 	if ( ! InitMainWindow())
-	{
-		return false;
-	}
-
-	if (!InitDirect3D())
 	{
 		return false;
 	}
@@ -154,126 +174,9 @@ bool GameWindow::InitMainWindow()
 	return true;
 }
 
-bool GameWindow::InitDirect3D()
-{
-#if defined(DEBUG) || defined(_DEBUG) 
-	// Enable the D3D12 debug layer.
-	{
-		ComPtr<ID3D12Debug> debugController;
-		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
-		debugController->EnableDebugLayer();
-	}
-#endif
-
-	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&_dxgiFactory)));
-
-	// Try to create hardware device.
-	HRESULT hardwareResult = D3D12CreateDevice(
-		nullptr,             // default adapter
-		D3D_FEATURE_LEVEL_11_0,
-		IID_PPV_ARGS(&_d3dDevice));
-
-	// Callback to WARP device.
-	if (FAILED(hardwareResult))
-	{
-		ComPtr<IDXGIAdapter> pWarpAdapter;
-		ThrowIfFailed(_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter)));
-
-		ThrowIfFailed(D3D12CreateDevice(
-			pWarpAdapter.Get(),
-			D3D_FEATURE_LEVEL_11_0,
-			IID_PPV_ARGS(&_d3dDevice)));
-	}
-
-	ThrowIfFailed(_d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, 
-		IID_PPV_ARGS(_fence.GetAddressOf())));
-
-	_rtvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	_dsvDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	_cbvSrvUavDescriptorSize = _d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
-	msQualityLevels.Format = _backBufferFormat;
-	msQualityLevels.SampleCount = 4;
-	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-	msQualityLevels.NumQualityLevels = 0;
-	ThrowIfFailed(_d3dDevice->CheckFeatureSupport(
-		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
-		&msQualityLevels,
-		sizeof(msQualityLevels)));
-
-	_4xMsaaQuality = msQualityLevels.NumQualityLevels;
-	assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
-
-#ifdef _DEBUG
-	LogAdapters();
-#endif
-
-	CreateCommandObjects();
-	CreateSwapChain();
-	CreateRtvAndDsvDescriptorHeaps();
-
-	return true;
-}
-
-void GameWindow::CreateCommandObjects()
-{
-	D3D12Helper::CreateCommandQueue(
-		_d3dDevice.Get(), _commandQueue.GetAddressOf(), 
-		D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-	D3D12Helper::CreateCommandAllocator(
-		_d3dDevice.Get(), _directCmdListAlloc.GetAddressOf(),
-		D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-	D3D12Helper::CreateCommandList(_d3dDevice.Get(),
-		_commandList.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT,
-		_directCmdListAlloc.Get());
-}
-
-void GameWindow::CreateSwapChain()
-{
-	DXGI_SAMPLE_DESC sampleDesc;
-	sampleDesc.Count = _4xMsaaState ? 4 : 1;
-	sampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-
-	D3D12Helper::CreateSwapChain(
-		_dxgiFactory.Get(), _commandQueue.Get(), 
-		_swapChain.GetAddressOf(),
-		_hMainWnd, 
-		D3D12Helper::DxgiMode(_backBufferFormat, _clientWidth, _clientHeight), 
-		sampleDesc);
-}
-
-void GameWindow::FlushCommandQueue()
-{
-	_currentFence++;
-	ThrowIfFailed(_commandQueue->Signal(_fence.Get(), _currentFence));
-
-	D3D12Helper::MakeFenceWaitFor(_fence.Get(), _currentFence);
-}
-
 void GameWindow::SetGameWindowText(const std::wstring & title)
 {
 	SetWindowText(_hMainWnd, title.c_str());
-}
-
-ID3D12Resource * GameWindow::CurrentBackBuffer() const
-{
-	return _swapChainBuffer[_currBackBuffer].Get();
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE GameWindow::CurrentBackBufferView() const
-{
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		_rtvHeap->GetCPUDescriptorHandleForHeapStart(), 
-		_currBackBuffer, 
-		_rtvDescriptorSize);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE GameWindow::DepthStencilView() const
-{
-	return _dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
 LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -415,15 +318,6 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void GameWindow::CreateRtvAndDsvDescriptorHeaps()
-{
-	DescriptorHeapHelper::CreateDescriptorHeap(_d3dDevice.Get(), _rtvHeap.GetAddressOf(),
-		_swapChainBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	DescriptorHeapHelper::CreateDescriptorHeap(_d3dDevice.Get(), _dsvHeap.GetAddressOf(),
-		1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-}
-
 void GameWindow::OnResize()
 {
 	assert(_d3dDevice);
@@ -523,103 +417,5 @@ void GameWindow::OnResize()
 	_scissorRect = { 0, 0, _clientWidth, _clientHeight };
 }
 
-void GameWindow::CalculateFrameStats()
-{
-	static unsigned int frameCount = 0;
-	static float timeElapsed = 0.0f;
-
-	++frameCount;
-	
-	if ((_timer.TotalTime() - timeElapsed) >= 1.0f)
-	{
-		float fps = (float)frameCount;
-		float mspf = 1000.0f / fps;
-
-		std::wstring fpsStr = std::to_wstring(fps);
-		std::wstring mspfStr = std::to_wstring(mspf);
-
-		SetGameWindowText(
-			L"    fps: " + fpsStr + 
-			L"   mspf: " + mspfStr);
-
-		frameCount = 0;
-		timeElapsed += 1.0f;
-	}
-}
-
-void GameWindow::LogAdapters()
-{
-	UINT i = 0;
-	IDXGIAdapter* adapter = nullptr;
-	std::vector<IDXGIAdapter*> adapterList;
-	while (_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_ADAPTER_DESC desc;
-		adapter->GetDesc(&desc);
-
-		std::wstring text = L"***Adapter: ";
-		text += desc.Description;
-		text += L"\n";
-
-		OutputDebugString(text.c_str());
-
-		adapterList.push_back(adapter);
-
-		++i;
-	}
-
-	for (size_t i = 0; i < adapterList.size(); ++i)
-	{
-		LogAdapterOutputs(adapterList[i]);
-		ReleaseCom(adapterList[i]);
-	}
-}
-
-void GameWindow::LogAdapterOutputs(IDXGIAdapter * adapter)
-{
-	UINT i = 0;
-	IDXGIOutput* output = nullptr;
-	while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_OUTPUT_DESC desc;
-		output->GetDesc(&desc);
-
-		std::wstring text = L"***Output: ";
-		text += desc.DeviceName;
-		text += L"\n";
-		OutputDebugString(text.c_str());
-
-		LogOutputDisplayModes(output, _backBufferFormat);
-
-		ReleaseCom(output);
-
-		++i;
-	}
-}
-
-void GameWindow::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT format)
-{
-	UINT count = 0;
-	UINT flags = 0;
-
-	// Call with nullptr to get list count.
-	output->GetDisplayModeList(format, flags, &count, nullptr);
-
-	std::vector<DXGI_MODE_DESC> modeList(count);
-	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
-
-	for (auto& x : modeList)
-	{
-		UINT n = x.RefreshRate.Numerator;
-		UINT d = x.RefreshRate.Denominator;
-		std::wstring text =
-			L"Width = " + std::to_wstring(x.Width) + L" " +
-			L"Height = " + std::to_wstring(x.Height) + L" " +
-			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
-			L"\n";
-
-		::OutputDebugString(text.c_str());
-	}
-}
 
 }// namespace EyeEngine
