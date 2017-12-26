@@ -89,5 +89,14 @@ public:
 		UINT			sampleCount, 
 		D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE);
 
+	// Create the DescritptorHeap,
+	// throw DxException if failed.
+	static void CreateDescriptorHeap(
+		ID3D12Device* d3dDevice,
+		ID3D12DescriptorHeap ** pHeap,
+		UINT numDescriptors,
+		D3D12_DESCRIPTOR_HEAP_TYPE type,
+		D3D12_DESCRIPTOR_HEAP_FLAGS flag = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+		UINT nodeMask = 0);
 };
 }
