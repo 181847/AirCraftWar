@@ -33,9 +33,6 @@
     <ClInclude Include="GameWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorHeapHelper.h">
-      <Filter>DirectX12HelpTools</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Library\DirectX12\Common\Camera.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -78,9 +75,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameWindow.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="DescriptorHeapHelper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Library\DirectX12\Common\Camera.cpp">
