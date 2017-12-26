@@ -19,6 +19,12 @@
     <Filter Include="Common">
       <UniqueIdentifier>{03888f2f-abb8-47d6-a886-4587f79242b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Systems">
+      <UniqueIdentifier>{2309b9b5-0987-45c1-9baf-0db7a9e671ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Systems\Render">
+      <UniqueIdentifier>{a495fc93-242e-4abc-9949-1303c291d620}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.md" />
@@ -60,6 +66,15 @@
     <ClInclude Include="D3D12Helper.h">
       <Filter>DirectX12HelpTools</Filter>
     </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>Systems\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameResource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EyeLogger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameWindow.cpp">
@@ -91,6 +106,15 @@
     </ClCompile>
     <ClCompile Include="D3D12Helper.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameResource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EyeLogger.cpp">
+      <Filter>头文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
