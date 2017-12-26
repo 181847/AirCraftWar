@@ -27,7 +27,7 @@ void InitLogger()
 	// example start:
 	// 12/25/17 12:59:28 -This is the first log message...[d:\visual studio 2015\projects\learningtests\trylog4cplus\trylog4cplus\trylog4cplus.cpp:42]
 	// example end
-	consoleAppender->setLayout(std::make_unique<PatternLayout>(LOG4CPLUS_TEXT("%d{%m/%d/%y %H:%M:%S} -%m[%l]%n")));
+	consoleAppender->setLayout(std::make_unique<PatternLayout>(LOG4CPLUS_TEXT("%d{%m/%d/%y %H:%M:%S} %m[%l]%n")));
 
 	g_eyeLogger = Logger::getInstance(LOG4CPLUS_TEXT("Global Logger for EyeEngine"));
 
