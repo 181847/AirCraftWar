@@ -1,32 +1,78 @@
 #include "RenderSystem.h"
 #include "D3D12Helper.h"
+#include "EyeLogger.h"
 
 namespace EyeEngine
 {
-RenderSystem::RenderSystem(
-	UINT frameResourceCount, 
-	ID3D12Device*	pDevice,
-	ID3D12CommandQueue * pCmdQueue,
-	ID3D12GraphicsCommandList*	pCmdList,
-	ID3D12Fence * pFence, 
-	UINT64 & currFence,
-	const UINT materialCount)
-	:
-	_device(pDevice), 
-	_cmdQueue(pCmdQueue),
-	_cmdList(pCmdList), 
-	_fence(pFence),
-	_currFence(currFence),
-	_numFrameResource(frameResourceCount)
-{
-	for (unsigned int i = 0; i < frameResourceCount; ++i)
-	{
-		_frameResources.push_back(std::make_unique<FrameResource>(pDevice, materialCount));
-	}
-}
 
 RenderSystem::~RenderSystem()
 {
+}
+
+void RenderSystem::CreateBasicD3DOjbects()
+{
+	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(_dxgiFactory.GetAddressOf())));
+	
+	HRESULT hardwareResult = D3D12CreateDevice(nullptr,
+		D3D_FEATURE_LEVEL_11_0,
+		IID_PPV_ARGS(_d3dDevice.GetAddressOf()));
+
+	// If failed with hardware adapter, 
+	// create with warpAdapter.
+	if (FAILED(hardwareResult))
+	{
+		Microsoft::WRL::ComPtr<IDXGIAdapter> pWarpAdapter;
+		ThrowIfFailed(_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(pWarpAdapter.GetAddressOf())));
+
+		ThrowIfFailed(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(_d3dDevice.GetAddressOf())));
+	}
+
+	D3D12Helper::CreateFence(_d3dDevice.Get(), _fence.GetAddressOf());
+
+}
+
+void RenderSystem::CreateCommandObjects()
+{
+	D3D12Helper::CreateCommandQueue(_d3dDevice.Get(), _cmdQueue.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+	D3D12Helper::CreateCommandAllocator(_d3dDevice.Get(), _directCmdAlloc.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+	D3D12Helper::CreateCommandList(_d3dDevice.Get(), _directCmdAlloc.Get(), _cmdList.GetAddressOf(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+}
+
+void RenderSystem::FlushCommandQueue()
+{
+	++_currFenceValue;
+	_cmdQueue->Signal(_fence.Get(), _currFenceValue);
+	
+	D3D12Helper::MakeFenceWaitFor(_fence.Get(), _currFenceValue);
+}
+
+void RenderSystem::LogAdapters()
+{
+	UINT i = 0;
+	IDXGIAdapter* adapter = nullptr;
+	std::vector<IDXGIAdapter*> adapterList;
+	while (_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
+	{
+		DXGI_ADAPTER_DESC desc;
+		adapter->GetDesc(&desc);
+
+		std::wstring text = L"***Adapter: ";
+		text += desc.Description;
+		text += L"\n";
+
+		OutputDebugString(text.c_str());
+		LOG_INFO(text);
+
+		adapterList.push_back(adapter);
+
+		++i;
+	}
+
+	for (size_t i = 0; i < adapterList.size(); ++i)
+	{
+		LogAdapterOutputs(adapterList[i]);
+		ReleaseCom(adapterList[i]);
+	}
 }
 
 void RenderSystem::Draw(GameTimer & gt)
