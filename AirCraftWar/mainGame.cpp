@@ -1,4 +1,5 @@
 #include <EyeEngine\GameWindow.h>
+#include <EyeEngine\EyeLogger.h>
 #include <iostream>
 #include <Windows.h>
 
@@ -9,6 +10,7 @@ int main(int argc, char ** argv)
 	HINSTANCE hInstance;
 	hInstance = GetModuleHandle(NULL);
 
+	EyeEngine::EyeLogger::InitLogger();
 
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
