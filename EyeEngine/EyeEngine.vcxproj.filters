@@ -104,17 +104,17 @@
     <ClCompile Include="..\..\Library\DirectX12\Common\MathHelper.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="D3D12Helper.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="FrameResource.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="EyeLogger.cpp">
       <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12Helper.cpp">
+      <Filter>DirectX12HelpTools</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>Systems\Render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
