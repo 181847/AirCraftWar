@@ -3,7 +3,6 @@
 #include <MyTools/MyAssert.h>
 #include <iostream>
 #include <string>
-#include "DescriptorHeapHelper.h"
 #include "D3D12Helper.h"
 
 namespace EyeEngine
@@ -27,9 +26,9 @@ GameWindow::GameWindow(HINSTANCE hInstance)
 
 GameWindow::~GameWindow()
 {
-	if (_d3dDevice != nullptr)
+	if (_renderSys.IsDeviceCreated())
 	{
-		//FlushCommandQueue();
+		_renderSys.FlushCommandQueue();
 	}
 }
 
@@ -47,22 +46,6 @@ HWND GameWindow::MainWnd() const
 {
 	return _hMainWnd;
 }
-
-float GameWindow::AspectRatio() const
-{
-	return static_cast<float>(_clientWidth) / _clientHeight;
-}
-
-bool GameWindow::Get4xMsaaState() const
-{
-	return _4xMsaaState;
-}
-
-void GameWindow::Set4xMsaaState(bool value)
-{
-	_4xMsaaState = value;
-}
-
 
 void GameWindow::CalculateFrameStats()
 {
@@ -88,6 +71,16 @@ void GameWindow::CalculateFrameStats()
 	}
 }
 
+void GameWindow::OnMouseDown(WPARAM btnState, int x, int y)
+{
+	SetCapture(_hMainWnd);
+}
+
+void GameWindow::OnMouseUp(WPARAM btnState, int x, int y)
+{
+	ReleaseCapture();
+}
+
 int GameWindow::Run()
 {
 	MSG msg = { 0 };
@@ -108,6 +101,7 @@ int GameWindow::Run()
 			if ( ! _gamePaused)
 			{
 				CalculateFrameStats();
+				_renderSys.WindowDraw(_timer);
 				//Update(_timer);
 				//Draw(_timer);
 			}
@@ -128,7 +122,10 @@ bool GameWindow::Initialize()
 	}
 
 	// init the swapChain.
-	OnResize();
+	if ( ! InitDirect3D())
+	{
+		return false;
+	}
 
 	return true;
 }
@@ -172,8 +169,15 @@ bool GameWindow::InitMainWindow()
 	UpdateWindow(_hMainWnd);
 
 	return true;
-}
+}
+bool GameWindow::InitDirect3D()
+{
+	_renderSys.InitD3DCommon();
 
+	_renderSys.WindowInit(_hMainWnd, _clientWidth, _clientHeight);
+
+	return true;
+}
 void GameWindow::SetGameWindowText(const std::wstring & title)
 {
 	SetWindowText(_hMainWnd, title.c_str());
@@ -204,7 +208,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// Save the new client area dimensions.
 		_clientWidth = LOWORD(lParam);
 		_clientHeight = HIWORD(lParam);
-		if (_d3dDevice)
+		if (_renderSys.IsDeviceCreated())
 		{
 			if (wParam == SIZE_MINIMIZED)
 			{
@@ -217,7 +221,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				_gamePaused = false;
 				_minimized = false;
 				_maximized = true;
-				OnResize();
+				_renderSys.WindowOnResize(_clientWidth, _clientHeight);
 			}
 			else if (wParam == SIZE_RESTORED)
 			{
@@ -227,7 +231,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					_gamePaused = false;
 					_minimized = false;
-					OnResize();
+					_renderSys.WindowOnResize(_clientWidth, _clientHeight);
 				}
 
 				// Restoring from maximized state?
@@ -235,7 +239,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					_gamePaused = false;
 					_maximized = false;
-					OnResize();
+					_renderSys.WindowOnResize(_clientWidth, _clientHeight);
 				}
 				else if (_resizing)
 				{
@@ -250,7 +254,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
 				{
-					OnResize();
+					_renderSys.WindowOnResize(_clientWidth, _clientHeight);
 				}
 			}
 		}
@@ -269,7 +273,7 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		_gamePaused = false;
 		_resizing = false;
 		_timer.Start();
-		OnResize();
+		_renderSys.WindowOnResize(_clientWidth, _clientHeight);
 		return 0;
 
 		// WM_DESTROY is sent when the window is being destroyed.
@@ -292,17 +296,17 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		
 		return 0;
 	case WM_LBUTTONUP:
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
-		//OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_MOUSEMOVE:
 		//OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		std::cout << "Mouse moved:  " << GET_X_LPARAM(lParam) << "\t:\t" << GET_Y_LPARAM(lParam) << std::endl;
+		//std::cout << "Mouse moved:  " << GET_X_LPARAM(lParam) << "\t:\t" << GET_Y_LPARAM(lParam) << std::endl;
 		return 0;
 	case WM_KEYUP:
 		if (wParam == VK_ESCAPE)
@@ -310,112 +314,12 @@ LRESULT GameWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 		}
 		else if ((int)wParam == VK_F2)
-			Set4xMsaaState(!_4xMsaaState);
+			_renderSys.WindowSet4xMsaaState(!_renderSys.WindowGet4xMsaaState());
 
 		return 0;
 	}
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
-
-void GameWindow::OnResize()
-{
-	assert(_d3dDevice);
-	assert(_swapChain);
-	assert(_directCmdListAlloc);
-
-	// Flush before changing any resources.
-	FlushCommandQueue();
-
-	ThrowIfFailed(_commandList->Reset(_directCmdListAlloc.Get(), nullptr));
-
-#pragma region Resize SwapChain
-	for (UINT i = 0; i < _swapChainBufferCount; ++i)
-	{
-		_swapChainBuffer[i].Reset();
-	}
-	_depthStencilBuffer.Reset();
-
-	ThrowIfFailed(_swapChain->ResizeBuffers(
-		_swapChainBufferCount, 
-		_clientWidth, _clientHeight, 
-		_backBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
-
-	_currBackBuffer = 0;
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-	for (UINT i = 0; i < _swapChainBufferCount; ++i)
-	{
-		ThrowIfFailed(_swapChain->GetBuffer(i, IID_PPV_ARGS(_swapChainBuffer[i].GetAddressOf())));
-		_d3dDevice->CreateRenderTargetView(_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-		rtvHeapHandle.Offset(1, _rtvDescriptorSize);
-	}
-#pragma endregion
-
-#pragma region Resize DepthStencilBuffer
-	D3D12_RESOURCE_DESC depthStencilDesc;
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = _clientWidth;
-	depthStencilDesc.Height = _clientHeight;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-
-	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
-	// the depth buffer.  Therefore, because we need to create two views to the same resource:
-	//   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
-	//   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
-	// we need to create the depth buffer resource with a typeless format.  
-	depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-
-	depthStencilDesc.SampleDesc.Count = _4xMsaaState ? 4 : 1;
-	depthStencilDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	D3D12_CLEAR_VALUE optClear;
-	optClear.Format = _depthStencilFormat;
-	optClear.DepthStencil.Depth = 1.0f;
-	optClear.DepthStencil.Stencil = 0;
-	ThrowIfFailed(_d3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&depthStencilDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		&optClear,
-		IID_PPV_ARGS(_depthStencilBuffer.GetAddressOf())));
-
-	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Format = _depthStencilFormat;
-	dsvDesc.Texture2D.MipSlice = 0;
-	_d3dDevice->CreateDepthStencilView(_depthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
-#pragma endregion
-
-	// change the _depthStencilBuffer state
-	_commandList->ResourceBarrier(1, 
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_depthStencilBuffer.Get(), 
-			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON, 
-			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE));
-
-	ThrowIfFailed(_commandList->Close());
-	ID3D12CommandList* cmdsList[] = {_commandList.Get()};
-	_commandQueue->ExecuteCommandLists(1, cmdsList);
-	FlushCommandQueue();
-
-	// Update the viewport transform to cover the client area.
-	_screenViewport.TopLeftX = 0;
-	_screenViewport.TopLeftY = 0;
-	_screenViewport.Width = static_cast<float>(_clientWidth);
-	_screenViewport.Height = static_cast<float>(_clientHeight);
-	_screenViewport.MinDepth = 0.0f;
-	_screenViewport.MaxDepth = 1.0f;
-
-	_scissorRect = { 0, 0, _clientWidth, _clientHeight };
-}
-
 
 }// namespace EyeEngine

@@ -1,6 +1,7 @@
 #pragma once
 #include <DirectX12/Common/d3dUtil.h>
 #include <DirectX12/Common/GameTimer.h>
+#include "RenderSystem.h"
 
 // Link necessary d3d12 libraries.
 #pragma comment(lib,"d3dcompiler.lib")
@@ -28,10 +29,10 @@ public:
 
 	HINSTANCE AppInst()const;
 	HWND      MainWnd()const;
-	float     AspectRatio()const;
+	/*float     AspectRatio()const;
 
 	bool Get4xMsaaState()const;
-	void Set4xMsaaState(bool value);
+	void Set4xMsaaState(bool value);*/
 
 	int Run();
 
@@ -39,8 +40,8 @@ public:
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
-	virtual void CreateRtvAndDsvDescriptorHeaps();
-	virtual void OnResize();
+	/*virtual void CreateRtvAndDsvDescriptorHeaps();
+	virtual void OnResize();*/
 	//virtual void Update(const GameTimer& gt) = 0;
 	//virtual void Draw(const GameTimer& gt) = 0;
 
@@ -48,22 +49,14 @@ protected:
 
 	bool InitMainWindow();
 	bool InitDirect3D();
-	void CreateCommandObjects();
-	void CreateSwapChain();
-
-	void FlushCommandQueue();
 
 	void SetGameWindowText(const std::wstring& title);
 
-	ID3D12Resource* CurrentBackBuffer()const;
-	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
-	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
-
 	void CalculateFrameStats();
 
-	void LogAdapters();
-	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+	void OnMouseDown(WPARAM btnState, int x, int y);
+
+	void OnMouseUp(WPARAM btnState, int x, int y);
 
 protected:
 
@@ -80,6 +73,7 @@ protected:
 
 									   // Used to keep track of the “delta-time?and game time (?.4).
 	GameTimer _timer;
+	RenderSystem _renderSys;
 
 	std::wstring _mainWndCaption = L"MainWindow";
 
