@@ -29,7 +29,12 @@ protected:
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 #pragma endregion
 
-	UINT64					_currFenceValue = 0;
+
+#pragma region D3D12 Status variabls
+										// Set true to use 4X MSAA (?.1.8).  The default is false.
+	bool		_4xMsaaState = false;	// 4X MSAA enabled
+	UINT		_4xMsaaQuality = 0;		// quality level of 4X MSAA
+	UINT64		_currFenceValue = 0;
 
 #pragma region variables about frameResources
 	const UINT _numFrameResource;
@@ -66,6 +71,10 @@ public:
 	~RenderSystem();
 
 #pragma region  functions about common D3DObjects operation.
+	// Initialize the common d3d objects.
+	// [dxgiFactor, d3dDevice, fence, cmdQueue, cmdAlloc, cmdList0]
+	void InitD3DCommon();
+
 	// Create [dxgiFactory, d3dDevice, fence].
 	// Get the multiSample support.
 	// Throw DxException when failed.
@@ -73,6 +82,9 @@ public:
 
 	// Create [cmdQueue, cmdAllocator, cmdList].
 	void CreateCommandObjects();
+
+	// check the multiSample support
+	void CheckMultiSampleSupport();
 
 	// Wait CommandQueue to reach a specific point.
 	void FlushCommandQueue();
