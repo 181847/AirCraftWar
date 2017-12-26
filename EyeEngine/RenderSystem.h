@@ -14,14 +14,13 @@ class RenderSystem
 protected:
 #pragma region variables about D3D12 Objects
 	Microsoft::WRL::ComPtr<IDXGIFactory4> _dxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> _swapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> _d3dDevice;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
 
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> _commandQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdListAlloc;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _commandList;
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue> _cmdQueue;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> _directCmdAlloc;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _cmdList;
 
 	UINT _rtvDescriptorSize = 0;
 	UINT _dsvDescriptorSize = 0;
@@ -32,7 +31,7 @@ protected:
 
 	// notice:
 	// This is a reference, should be init as the RenderSystem created.
-	UINT64&					_currFence = 0;
+	UINT64					_currFenceValue = 0;
 
 #pragma region variables about frameResources
 	const UINT _numFrameResource;
@@ -43,6 +42,7 @@ protected:
 #pragma endregion
 
 #pragma region variables about Window usage such as [swapChain, viewPort, wndWidth]
+	Microsoft::WRL::ComPtr<IDXGISwapChain> _swapChain;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap;
 
@@ -84,11 +84,10 @@ public:
 #pragma region functions for logging adapter and output display modes
 	void LogAdapters();
 
-	void LogAdapterOutputs(IDXGIAdapter);
+	void LogAdapterOutputs(IDXGIAdapter* pAdapter);
 
 	void LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT format);
 #pragma endregion
-
 
 #pragma region Window functions
 	// Create a SwapChain for the windowed application.
@@ -109,14 +108,15 @@ public:
 
 	// resize the swapChain and corresponding depthStencil buffer
 	void WindowOnResize(int newWidth, int newHeight);
-#pragma endregion
 
 	// update [lights, cameras, new instance, change instance pose],
 	// change to another FrameResource to get 
-	void Update(GameTimer& gt);
+	void WindowUpdate(GameTimer& gt);
 
-	// Commite drawing command to command queue and execute it.
-	void Draw(GameTimer& gt);
+	// Commit drawing command to command queue and execute it.
+	void WindowDraw(GameTimer& gt);
+#pragma endregion
+
 
 protected:
 	// Switch to the next frameResource, 
