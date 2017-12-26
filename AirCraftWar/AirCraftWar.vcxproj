@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\GitHub\C_C++\Library;$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>D:\GitHub\C_C++\Library;$(SolutionDir);$(SolutionDir)\deps\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)/Debug;$(SolutionDir)/deps/lib/;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
