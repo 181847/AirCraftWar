@@ -82,5 +82,12 @@ public:
 	// Block the fence until its value reach the expectValue
 	static void MakeFenceWaitFor(ID3D12Fence* pFence, UINT64 expectValue);
 
+	// check and return the featuren of multiSample quality.
+	static UINT CheckMultiSampleQuality(
+		ID3D12Device*	pDevice,
+		DXGI_FORMAT		format, 
+		UINT			sampleCount, 
+		D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE);
+
 };
 }

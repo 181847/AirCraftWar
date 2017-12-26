@@ -105,4 +105,20 @@ void D3D12Helper::MakeFenceWaitFor(ID3D12Fence * pFence, UINT64 expectValue)
 	}
 }
 
+UINT D3D12Helper::CheckMultiSampleQuality(ID3D12Device* pDevice, DXGI_FORMAT format, UINT sampleCount, D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS flags)
+{
+	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
+	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+	msQualityLevels.Format = format;
+	msQualityLevels.NumQualityLevels = 0;
+	msQualityLevels.SampleCount = 4;
+
+	pDevice->CheckFeatureSupport(
+		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+		&msQualityLevels,
+		sizeof(msQualityLevels));
+
+	return msQualityLevels.NumQualityLevels;
+}
+
 }// namespace EyeEngine
