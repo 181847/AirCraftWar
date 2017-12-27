@@ -17,11 +17,6 @@ System  |   职能
 --------|---------
 RenderSystem    |   负责所有D3D对象的创建， 但是我在构想的时候不想把这个系统限定在窗口的SwapChain之上，所以有一些接口留有余地，而不是限定死了必须使用SwapChain作为渲染目标。<br/>但是目前而言还是以SwapChain为主。<br/>而这些和SwapChain相关的函数名都会带有Window字样。
 
-<br/>
-<br/>
-<br/>
-<br/>
-
 ## D3D12Helper
 定义一系列方便调用的D3D包装函数，比如创建CommandQueue，比如阻塞Fence直到大于某个特定的值。
 
@@ -33,3 +28,4 @@ CreateCommandList   |   创建CommandList
 CreateSwapChain |   创建SwapChain
 DxgiMode    |   用于引导生成**DXGI_MODE_DESC**结构体，这个方法可以用于CreateSwapChain的参数中。
 MakeFenceWaitFor    |   阻塞线程，直到Fence的值大于等于指定的值
+CheckMultiSampleQuality |   检查设备对多重采样的支持质量

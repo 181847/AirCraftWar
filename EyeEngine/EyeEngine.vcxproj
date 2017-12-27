@@ -22,7 +22,7 @@
     <ProjectGuid>{F270A4B3-C9F9-47F6-AD34-7925B9643487}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>EyeEngine</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\GitHub\C_C++\Library;$(Solutiondir)/deps/include/;$(IncludePath)</IncludePath>
+    <IncludePath>$(Solutiondir)/deps/include/;D:\GitHub\C_C++\Library;$(IncludePath)</IncludePath>
     <LibraryPath>$(SoluctionDir)/deps/lib/;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -141,39 +141,19 @@
     <Text Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Library\DirectX12\Common\Camera.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dApp.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dUtil.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dx12.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\DDSTextureLoader.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\GameTimer.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\GeometryGenerator.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\MathHelper.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\UploadBuffer.h" />
+    <ClInclude Include="..\deps\include\GameCommon\GameTimer.h" />
+    <ClInclude Include="CommonDirectXTKHeadFiles.h" />
     <ClInclude Include="D3D12Helper.h" />
     <ClInclude Include="EyeLogger.h" />
-    <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameWindow.h" />
     <ClInclude Include="RenderSystem.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\DirectX12\Common\Camera.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\d3dApp.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\d3dUtil.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\DDSTextureLoader.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\GameTimer.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\GeometryGenerator.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\MathHelper.cpp" />
+    <ClCompile Include="..\deps\include\GameCommon\GameTimer.cpp" />
     <ClCompile Include="D3D12Helper.cpp" />
     <ClCompile Include="EyeLogger.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DirectXTK12\DirectXTK_Desktop_2015_Win10.vcxproj">
-      <Project>{3e0e8608-cd9b-4c76-af33-29ca38f2c9f0}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

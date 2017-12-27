@@ -1,7 +1,8 @@
-#pragma once
+#pragma once/*
 #include <DirectX12/Common/d3dUtil.h>
 #include <DirectX12/Common/MathHelper.h>
-#include <DirectX12/Common/UploadBuffer.h>
+#include <DirectX12/Common/UploadBuffer.h>*/
+#include "CommonDirectXTKHeadFiles.h"
 #include <MyTools/MyTools.h>
 
 namespace EyeEngine

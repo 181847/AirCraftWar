@@ -1,8 +1,9 @@
 #pragma once
-#include <DirectX12/Common/d3dUtil.h>
-#include <DirectX12/Common/Camera.h>
-#include <DirectX12/Common/GameTimer.h>
-#include "FrameResource.h"
+//#include <DirectX12/Common/d3dUtil.h>
+#include "CommonDirectXTKHeadFiles.h"
+#include <GameCommon\GameTimer.h>
+#include <MyTools\MyTools.h>
+//#include "FrameResource.h"
 
 namespace EyeEngine
 {
@@ -13,7 +14,7 @@ class RenderSystem
 {
 protected:
 #pragma region variables about D3D12 Objects
-	Microsoft::WRL::ComPtr<IDXGIFactory4>	_dxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGIFactory>	_dxgiFactory;
 	Microsoft::WRL::ComPtr<ID3D12Device>	_d3dDevice;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence>		_fence;
@@ -27,6 +28,8 @@ protected:
 	UINT _cbvSrvUavDescriptorSize	= 0;
 
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
+
+	std::unique_ptr<DirectX::GraphicsMemory> _graphicsMemory;
 #pragma endregion
 
 #pragma region D3D12 Status variabls
@@ -38,7 +41,7 @@ protected:
 	// the current frame resource Index
 	UINT		_currFrameResourceIndex = 0;
 	const UINT	_numFrameResource;
-	std::vector<std::unique_ptr<FrameResource>> _frameResources;
+	//std::vector<std::unique_ptr<FrameResource>> _frameResources;
 #pragma endregion
 										// Set true to use 4X MSAA (?.1.8).  The default is false.
 	bool		_4xMsaaState = false;	// 4X MSAA enabled
@@ -138,6 +141,14 @@ public:
 	// change to another FrameResource to get 
 	//void WindowUpdate(GameTimer& gt);
 
+	// Reset the commandList and allocator,
+	// set the backBuffer/depthStencilBuffer,
+	// set viewPort/scissorRect
+	void WindowClear();
+
+	// swap the swapChain
+	void WindowPresent();
+
 	// Commit drawing command to command queue and execute it.
 	// For test, just reset the swapChains buffer with different color.
 	void WindowDraw(GameTimer& gt);
@@ -152,7 +163,7 @@ protected:
 	void WindowTickFrameResource();
 
 	// Get the FrameResource with the index _currFrameResourceIndex.
-	FrameResource* WindowGetCurrentFrameResouce();
+	//FrameResource* WindowGetCurrentFrameResouce();
 #pragma endregion
 
 };

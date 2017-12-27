@@ -1,5 +1,5 @@
 #pragma once
-#include <DirectX12\Common\d3dUtil.h>
+#include "CommonDirectXTKHeadFiles.h"
 
 namespace EyeEngine
 {
@@ -42,7 +42,7 @@ public:
 	static void CreateSwapChain
 	(
 #pragma region CreateSwapChain function args
-		IDXGIFactory4*			pDxgiFactory,
+		IDXGIFactory*			pDxgiFactory,
 		ID3D12CommandQueue*		pCmdQueue,
 		IDXGISwapChain**		ppSwapChain,
 		HWND				outputWindow,
