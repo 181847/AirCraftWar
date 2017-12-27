@@ -33,24 +33,72 @@
     <ClInclude Include="GameWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\Camera.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\d3dApp.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\d3dUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\d3dx12.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\DDSTextureLoader.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\GameTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\GeometryGenerator.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\MathHelper.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Library\DirectX12\Common\UploadBuffer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="D3D12Helper.h">
       <Filter>DirectX12HelpTools</Filter>
     </ClInclude>
     <ClInclude Include="RenderSystem.h">
       <Filter>Systems\Render</Filter>
     </ClInclude>
-    <ClInclude Include="EyeLogger.h">
+    <ClInclude Include="FrameResource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CommonDirectXTKHeadFiles.h">
-      <Filter>DirectX12HelpTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deps\include\GameCommon\GameTimer.h">
-      <Filter>Common</Filter>
+    <ClInclude Include="EyeLogger.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\Camera.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\d3dApp.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\d3dUtil.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\DDSTextureLoader.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\GameTimer.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\GeometryGenerator.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Library\DirectX12\Common\MathHelper.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameResource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="EyeLogger.cpp">
@@ -61,9 +109,6 @@
     </ClCompile>
     <ClCompile Include="RenderSystem.cpp">
       <Filter>Systems\Render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\deps\include\GameCommon\GameTimer.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

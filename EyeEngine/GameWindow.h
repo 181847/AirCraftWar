@@ -1,5 +1,6 @@
 #pragma once
-#include <GameCommon/GameTimer.h>
+#include <DirectX12/Common/d3dUtil.h>
+#include <DirectX12/Common/GameTimer.h>
 #include "RenderSystem.h"
 
 // Link necessary d3d12 libraries.

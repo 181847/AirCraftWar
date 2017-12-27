@@ -24,7 +24,7 @@ void RenderSystem::InitD3DCommon()
 
 void RenderSystem::CreateBasicD3DOjbects()
 {
-	DirectX::ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(_dxgiFactory.GetAddressOf())));
+	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(_dxgiFactory.GetAddressOf())));
 	
 	HRESULT hardwareResult = D3D12CreateDevice(nullptr,
 		D3D_FEATURE_LEVEL_11_0,
@@ -35,12 +35,10 @@ void RenderSystem::CreateBasicD3DOjbects()
 	if (FAILED(hardwareResult))
 	{
 		Microsoft::WRL::ComPtr<IDXGIAdapter> pWarpAdapter;
-		DirectX::ThrowIfFailed(_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(pWarpAdapter.GetAddressOf())));
+		ThrowIfFailed(_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(pWarpAdapter.GetAddressOf())));
 
-		DirectX::ThrowIfFailed(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(_d3dDevice.GetAddressOf())));
+		ThrowIfFailed(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(_d3dDevice.GetAddressOf())));
 	}
-
-	
 
 	D3D12Helper::CreateFence(_d3dDevice.Get(), _fence.GetAddressOf());
 
@@ -139,8 +137,8 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 
 	FlushCommandQueue();
 
-	DirectX::ThrowIfFailed(_directCmdAlloc->Reset());
-	DirectX::ThrowIfFailed(_cmdList->Reset(_directCmdAlloc.Get(), nullptr));
+	ThrowIfFailed(_directCmdAlloc->Reset());
+	ThrowIfFailed(_cmdList->Reset(_directCmdAlloc.Get(), nullptr));
 
 	_clientWidth = newWidth;
 	_clientHeight = newHeight;
@@ -152,7 +150,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	_depthStencilBuffer.Reset();
 	
 	// resize backBuffer.
-	DirectX::ThrowIfFailed(
+	ThrowIfFailed(
 		_swapChain->ResizeBuffers(
 			_swapChainBufferCount, 
 			newWidth, newHeight, 
@@ -163,7 +161,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandler(_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (int i = 0; i < _swapChainBufferCount; ++i)
 	{
-		DirectX::ThrowIfFailed(_swapChain->GetBuffer(i, IID_PPV_ARGS(_swapChainBuffer[i].GetAddressOf())));
+		ThrowIfFailed(_swapChain->GetBuffer(i, IID_PPV_ARGS(_swapChainBuffer[i].GetAddressOf())));
 		_d3dDevice->CreateRenderTargetView(_swapChainBuffer[i].Get(), nullptr, rtvHeapHandler);
 		rtvHeapHandler.Offset(1, _rtvDescriptorSize);
 	}
@@ -186,7 +184,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
 
-	DirectX::ThrowIfFailed(_d3dDevice->CreateCommittedResource(
+	ThrowIfFailed(_d3dDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
 		&depthStencilRecouceDesc,
@@ -209,7 +207,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 		D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	// execute all the commands
-	DirectX::ThrowIfFailed(_cmdList->Close());
+	ThrowIfFailed(_cmdList->Close());
 	ID3D12CommandList* cmdList[] = { _cmdList.Get() };
 	_cmdQueue->ExecuteCommandLists(1, cmdList);
 	FlushCommandQueue();
@@ -329,65 +327,59 @@ void RenderSystem::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT forma
 	}
 }
 
-void RenderSystem::WindowClear()
+void RenderSystem::WindowDraw(GameTimer & gt)
 {
-	DirectX::ThrowIfFailed(_directCmdAlloc->Reset());
-	DirectX::ThrowIfFailed(_cmdList->Reset(_directCmdAlloc.Get(), nullptr));
+	ThrowIfFailed(_directCmdAlloc->Reset());
+	_cmdList->Reset(_directCmdAlloc.Get(), nullptr);
+	
+	_cmdList->RSSetViewports(1, &_screenViewport);
+	_cmdList->RSSetScissorRects(1, &_scissorRect);
+	auto currBackBuffer = WindowGetCurrentBackBuffer();
 
 	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		WindowGetCurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
+			currBackBuffer, 
+			D3D12_RESOURCE_STATE_PRESENT, 
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	float redChannelForTime = 0.5f + 0.5f * sin(gt.TotalTime());
-	FLOAT color[4] = { redChannelForTime, 0.0f, 0.0f, 1.0f };
+	FLOAT color[4] = {  redChannelForTime, 0.0f, 0.0f, 1.0f };
 	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), color, 0, nullptr);
 	_cmdList->ClearDepthStencilView(WindowDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 	_cmdList->OMSetRenderTargets(1, &WindowCurrentBackBufferView(), true, &WindowDepthStencilView());
-
-	_cmdList->RSSetViewports(1, &_screenViewport);
-	_cmdList->RSSetScissorRects(1, &_scissorRect);
-}
-
-void RenderSystem::WindowPresent()
-{
-}
-
-void RenderSystem::WindowDraw(GameTimer & gt)
-{
-	WindowClear();
-	WindowPresent();
-}
-
-void RenderSystem::WindowTickSwapChain()
-{
+	
+	
 	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		WindowGetCurrentBackBuffer(),
+		currBackBuffer,
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATE_PRESENT));
 
-	DirectX::ThrowIfFailed(_cmdList->Close());
+	ThrowIfFailed(_cmdList->Close());
 	ID3D12CommandList* cmdLists[] = { _cmdList.Get() };
 	_cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
-	DirectX::ThrowIfFailed(_swapChain->Present(0, 0));
+	ThrowIfFailed(_swapChain->Present(0, 0));
 
 	WindowTickSwapChain();
 	FlushCommandQueue();
 }
 
+void RenderSystem::WindowTickSwapChain()
+{
+	_currBackBuffer = (_currBackBuffer + 1) % _swapChainBufferCount;
+}
+
 void RenderSystem::WindowTickFrameResource()
 {
 	_currFrameResourceIndex = (_currFrameResourceIndex + 1) % _numFrameResource;
-	/*
-		D3D12Helper::MakeFenceWaitFor(
-			_fence.Get(), WindowGetCurrentFrameResouce()->_fenceValue);*/
+
+	D3D12Helper::MakeFenceWaitFor(
+		_fence.Get(), WindowGetCurrentFrameResouce()->_fenceValue);
 }
 
-//FrameResource * RenderSystem::WindowGetCurrentFrameResouce()
-//{
-//	return _frameResources[_currFrameResourceIndex].get();
-//}
+FrameResource * RenderSystem::WindowGetCurrentFrameResouce()
+{
+	return _frameResources[_currFrameResourceIndex].get();
+}
 
 }// namespace EyeEngine
 

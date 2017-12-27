@@ -22,7 +22,7 @@
     <ProjectGuid>{1B87E2E2-6E50-498A-946F-B966E66F5406}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>AirCraftWar</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

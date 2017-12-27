@@ -3,6 +3,7 @@
 #include <MyTools/MyAssert.h>
 #include <iostream>
 #include <string>
+#include "D3D12Helper.h"
 
 namespace EyeEngine
 {

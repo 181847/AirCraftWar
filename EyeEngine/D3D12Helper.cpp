@@ -47,7 +47,7 @@ D3D12Helper::CreateCommandList(
 }
 
 void D3D12Helper::CreateSwapChain(
-	IDXGIFactory* pDxgiFactory,
+	IDXGIFactory4* pDxgiFactory,
 	ID3D12CommandQueue* pCmdQueue,
 	IDXGISwapChain** ppSwapChain,
 	HWND outputWindow, 
