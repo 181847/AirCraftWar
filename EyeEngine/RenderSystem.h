@@ -3,6 +3,7 @@
 #include <DirectX12/Common/Camera.h>
 #include <DirectX12/Common/GameTimer.h>
 #include "FrameResource.h"
+#include "DirectXTKIncludeHeader.h"
 
 namespace EyeEngine
 {
@@ -27,6 +28,8 @@ protected:
 	UINT _cbvSrvUavDescriptorSize	= 0;
 
 	D3D_DRIVER_TYPE _d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
+
+	std::unique_ptr<DirectX::GraphicsMemory> m_graphicMemory;
 #pragma endregion
 
 #pragma region D3D12 Status variabls
@@ -133,6 +136,15 @@ public:
 	bool WindowGet4xMsaaState();
 
 	float WindowAspectRation();
+
+	// clear the commandAlloca and commandList,
+	// set the backBuffer/ depthStencilBuffer,
+	// set ViewPort/ ScissorRect.
+	void WindowClear();
+
+	// swap the back and front buffer,
+	// present the swapChain.
+	void WindowPresent();
 
 	// update [lights, cameras, new instance, change instance pose],
 	// change to another FrameResource to get 

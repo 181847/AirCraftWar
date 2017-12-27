@@ -42,6 +42,16 @@ void RenderSystem::CreateBasicD3DOjbects()
 
 	D3D12Helper::CreateFence(_d3dDevice.Get(), _fence.GetAddressOf());
 
+	m_graphicMemory = std::make_unique<DirectX::GraphicsMemory>(_d3dDevice.Get());
+	if (m_graphicMemory == nullptr)
+	{
+		LOG_INFO("GrahpicMemory Creation: Failed ");
+	}
+	else
+	{
+		LOG_INFO("GrahpicMemory Creation: True ");
+	}
+
 }
 
 void RenderSystem::InitDescriptorSizes()
@@ -327,29 +337,30 @@ void RenderSystem::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT forma
 	}
 }
 
-void RenderSystem::WindowDraw(GameTimer & gt)
+void RenderSystem::WindowClear()
 {
 	ThrowIfFailed(_directCmdAlloc->Reset());
 	_cmdList->Reset(_directCmdAlloc.Get(), nullptr);
 	
 	_cmdList->RSSetViewports(1, &_screenViewport);
 	_cmdList->RSSetScissorRects(1, &_scissorRect);
-	auto currBackBuffer = WindowGetCurrentBackBuffer();
 
 	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-			currBackBuffer, 
-			D3D12_RESOURCE_STATE_PRESENT, 
-			D3D12_RESOURCE_STATE_RENDER_TARGET));
+		WindowGetCurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	float redChannelForTime = 0.5f + 0.5f * sin(gt.TotalTime());
-	FLOAT color[4] = {  redChannelForTime, 0.0f, 0.0f, 1.0f };
+	FLOAT color[4] = { redChannelForTime, 0.0f, 0.0f, 1.0f };
 	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), color, 0, nullptr);
 	_cmdList->ClearDepthStencilView(WindowDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 	_cmdList->OMSetRenderTargets(1, &WindowCurrentBackBufferView(), true, &WindowDepthStencilView());
-	
-	
+}
+
+void RenderSystem::WindowPresent()
+{
 	_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-		currBackBuffer,
+		WindowGetCurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATE_PRESENT));
 
@@ -358,8 +369,18 @@ void RenderSystem::WindowDraw(GameTimer & gt)
 	_cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
 	ThrowIfFailed(_swapChain->Present(0, 0));
-
 	WindowTickSwapChain();
+}
+
+void RenderSystem::WindowDraw(GameTimer & gt)
+{
+	
+	WindowClear();
+
+	WindowPresent();
+
+	m_graphicMemory->Commit(_cmdQueue.Get());
+
 	FlushCommandQueue();
 }
 
