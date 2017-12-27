@@ -72,6 +72,9 @@
     <ClInclude Include="EyeLogger.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DirectXTKIncludeHeader.h">
+      <Filter>DirectX12HelpTools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameWindow.cpp">
