@@ -155,7 +155,7 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 			_swapChainBufferCount, 
 			newWidth, newHeight, 
 			_backBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
-	//_currBackBuffer = 0;
+	_currBackBuffer = 0;
 
 	// clear back buffer's resources and rebuild them.
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandler(_rtvHeap->GetCPUDescriptorHandleForHeapStart());
