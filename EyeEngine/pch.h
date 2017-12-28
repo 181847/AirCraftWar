@@ -59,3 +59,5 @@ namespace DX
         }
     }
 }
+
+#include "CommonDirectXTKHeadFiles.h"
