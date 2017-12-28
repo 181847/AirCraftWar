@@ -22,7 +22,7 @@
     <ProjectGuid>{F270A4B3-C9F9-47F6-AD34-7925B9643487}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>EyeEngine</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -141,6 +141,8 @@
     <Text Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common\d3dx12.h" />
+    <ClInclude Include="Common\StepTimer.h" />
     <ClInclude Include="D3D12Helper.h" />
     <ClInclude Include="DirectXTKIncludeHeader.h" />
     <ClInclude Include="EyeLogger.h" />
@@ -151,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="D3D12Helper.cpp" />
     <ClCompile Include="EyeLogger.cpp" />
+    <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
   </ItemGroup>
