@@ -7,6 +7,15 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+// Indicates to hybrid graphics systems to prefer the discrete part by default
+extern "C"
+{
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 namespace EyeEngine
 {
 
@@ -24,14 +33,10 @@ protected:
 
 public:
 
-	static GameWindow* GetApp();
+	static GameWindow*	GetWindow();
 
-	HINSTANCE AppInst()const;
-	HWND      MainWnd()const;
-	/*float     AspectRatio()const;
-
-	bool Get4xMsaaState()const;
-	void Set4xMsaaState(bool value);*/
+	HINSTANCE			AppInst()const;
+	HWND				MainWnd()const;
 
 	int Run();
 
@@ -39,45 +44,12 @@ public:
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
-	/*virtual void CreateRtvAndDsvDescriptorHeaps();
-	virtual void OnResize();*/
-	//virtual void Update(const GameTimer& gt) = 0;
-	//virtual void Draw(const GameTimer& gt) = 0;
-
-protected:
-
-	bool InitMainWindow();
-	bool InitDirect3D();
-
-	void SetGameWindowText(const std::wstring& title);
-
-	void CalculateFrameStats();
-
-	void OnMouseDown(WPARAM btnState, int x, int y);
-
-	void OnMouseUp(WPARAM btnState, int x, int y);
-
-protected:
 
 	static GameWindow* _window;
 
 	HINSTANCE _hAppInst = nullptr; // application instance handle
 	HWND      _hMainWnd = nullptr; // main window handle
-	bool      _gamePaused = false;  // is the game paused?
-	bool      _minimized = false;  // is the application minimized?
-	bool      _maximized = false;  // is the application maximized?
-	bool      _resizing = false;   // are the resize bars being dragged?
-	bool      _fullscreenState = false;// fullscreen enabled
-
-
-									   // Used to keep track of the “delta-time?and game time (?.4).
-	GameTimer _timer;
-	RenderSystem _renderSys;
-
-	std::wstring _mainWndCaption = L"MainWindow";
-
-	int _clientWidth = 800;
-	int _clientHeight = 600;
+	
 };
 
 }// namespace EyeEngine
