@@ -7,6 +7,9 @@
 
 #include "Common\StepTimer.h"
 
+namespace EyeEngine
+{
+
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -19,6 +22,9 @@ public:
 
     // Initialization and management
     void Initialize(HWND window, int width, int height);
+
+	// Is the basic D3D objects created?
+	bool IsInitialized();
 
     // Basic game loop
     void Tick();
@@ -50,6 +56,8 @@ private:
 
     void OnDeviceLost();
 
+	bool												m_isInitilized = false;
+
     // Application state
     HWND                                                m_window;
     int                                                 m_outputWidth;
@@ -79,3 +87,5 @@ private:
     // Game state
     DX::StepTimer                                       m_timer;
 };
+
+}// namespace EyeEngine

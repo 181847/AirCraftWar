@@ -5,6 +5,11 @@
 #include "pch.h"
 #include "Game.h"
 
+
+namespace EyeEngine
+{
+
+
 extern void ExitGame();
 
 using namespace DirectX;
@@ -43,6 +48,13 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
+
+	m_isInitilized = true;
+}
+
+bool Game::IsInitialized()
+{
+	return m_isInitilized;
 }
 
 // Executes the basic game loop.
@@ -515,3 +527,5 @@ void Game::OnDeviceLost()
     CreateDevice();
     CreateResources();
 }
+
+}// namespace EyeEngine

@@ -50,6 +50,8 @@ bool EyeEngine::GameWindow::Initialize()
 	if (FAILED(initialize))
 		return false;
 
+
+	// make the Game object.
 	m_game = std::make_unique<Game>();
 
 	// Register class and create window
@@ -153,7 +155,7 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		if (s_in_sizemove /*&& game*/)
 		{
-			//game->Tick();
+			m_game->Tick();
 		}
 		else
 		{
@@ -168,9 +170,9 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (!s_minimized)
 			{
 				s_minimized = true;
-				if (!s_in_suspend  /*&& game*/)
+				if (!s_in_suspend  && m_game->IsInitialized())
 				{
-					//game->OnSuspending();
+					m_game->OnSuspending();
 				}
 				s_in_suspend = true;
 			}
@@ -178,15 +180,15 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		else if (s_minimized)
 		{
 			s_minimized = false;
-			if (s_in_suspend /*&& game*/)
+			if (s_in_suspend  && m_game->IsInitialized())
 			{
-				//game->OnResuming();
+				m_game->OnResuming();
 			}
 			s_in_suspend = false;
 		}
-		else if (!s_in_sizemove/* && game*/)
+		else if (!s_in_sizemove  && m_game->IsInitialized())
 		{
-			//game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
+			m_game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
 		}
 		break;
 
@@ -196,13 +198,13 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_EXITSIZEMOVE:
 		s_in_sizemove = false;
-		/*if (game)
+		if (m_game->IsInitialized())
 		{
 			RECT rc;
 			GetClientRect(hWnd, &rc);
 
-			game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
-		}*/
+			m_game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
+		}
 		break;
 
 	case WM_GETMINMAXINFO:
@@ -214,17 +216,17 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	break;
 
 	case WM_ACTIVATEAPP:
-		/*if (game)
+		if (m_game->IsInitialized())
 		{
 			if (wParam)
 			{
-				game->OnActivated();
+				m_game->OnActivated();
 			}
 			else
 			{
-				game->OnDeactivated();
+				m_game->OnDeactivated();
 			}
-		}*/
+		}
 		break;
 
 	case WM_POWERBROADCAST:
@@ -296,6 +298,10 @@ LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-
+// Exit helper
+void ExitGame()
+{
+	PostQuitMessage(0);
+}
 
 }// namespace EyeEngine
