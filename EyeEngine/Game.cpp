@@ -5,6 +5,10 @@
 #include "pch.h"
 #include "Game.h"
 
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
+using Microsoft::WRL::ComPtr;
+
 
 namespace EyeEngine
 {
@@ -90,9 +94,20 @@ void Game::Render()
     Clear();
 
     // TODO: Add your rendering code here.
+	ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
+	m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+
+	m_spriteBatch->Begin(m_commandList.Get());
+
+	m_spriteBatch->Draw(m_resourceDescriptors->GetFirstGpuHandle(),
+		GetTextureSize(m_catTexture.Get()), m_screenPos, nullptr, Colors::White, 0.f,
+		m_origin);
+
+	m_spriteBatch->End();
 
     // Show the new frame.
     Present();
+	m_graphicsMemory->Commit(m_commandQueue.Get());
 }
 
 // Helper method to prepare the command list for rendering and clear the back buffers.
@@ -292,6 +307,42 @@ void Game::CreateDevice()
     }
 
     // TODO: Initialize device dependent objects here (independent of window size).
+	m_graphicsMemory = std::make_unique<DirectX::GraphicsMemory>(m_d3dDevice.Get());
+
+#ifdef DIRECTXTK12_LOADING_TEXTURE
+	m_resourceDescriptors = std::make_unique<DescriptorHeap>(m_d3dDevice.Get(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		Descriptors::Count);
+
+	ResourceUploadBatch resourceUpload(m_d3dDevice.Get());
+	resourceUpload.Begin();
+	
+	/*DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), 
+		resourceUpload, L"..\\TestingDirectXTK\\Texture\\cat.png", 
+		m_catTexture.ReleaseAndGetAddressOf()));*/
+
+	DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), 
+		resourceUpload, L"..\\TestingDirectXTK\\Texture\\cat.dds",
+		m_catTexture.ReleaseAndGetAddressOf()));
+
+	CreateShaderResourceView(m_d3dDevice.Get(), m_catTexture.Get(), 
+		m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
+
+	RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+	SpriteBatchPipelineStateDescription pd(rtState);//, &CommonStates::NonPremultiplied);
+	m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dDevice.Get(), resourceUpload, pd);
+	
+	XMUINT2 catSize = GetTextureSize(m_catTexture.Get());
+	
+	m_origin.x = float(catSize.x / 2);
+	m_origin.y = float(catSize.y / 2);
+
+	auto uploadResourceFinished = resourceUpload.End(m_commandQueue.Get());
+
+	uploadResourceFinished.wait();
+
+#endif
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -419,6 +470,12 @@ void Game::CreateResources()
     m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
     // TODO: Initialize windows-size dependent objects here.
+	D3D12_VIEWPORT viewport = { 0.0f, 0.0f, 
+		static_cast<float>(backBufferWidth), static_cast<float>(backBufferHeight) };
+	m_spriteBatch->SetViewport(viewport);
+	
+	m_screenPos.x = backBufferWidth / 2.f;
+	m_screenPos.y = backBufferHeight / 2.f;
 }
 
 void Game::WaitForGpu() noexcept
@@ -507,6 +564,12 @@ void Game::GetAdapter(IDXGIAdapter1** ppAdapter)
 void Game::OnDeviceLost()
 {
     // TODO: Perform Direct3D resource cleanup.
+	m_catTexture.Reset();
+	m_resourceDescriptors.reset();
+
+	m_graphicsMemory.reset();
+
+	m_spriteBatch.reset();
 
     for (UINT n = 0; n < c_swapBufferCount; n++)
     {

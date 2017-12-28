@@ -7,6 +7,8 @@
 
 #include "Common\StepTimer.h"
 
+#define DIRECTXTK12_LOADING_TEXTURE
+
 namespace EyeEngine
 {
 
@@ -86,6 +88,23 @@ private:
 
     // Game state
     DX::StepTimer                                       m_timer;
+
+
+	std::unique_ptr<DirectX::GraphicsMemory>			m_graphicsMemory;
+
+#ifdef DIRECTXTK12_LOADING_TEXTURE
+	std::unique_ptr<DirectX::DescriptorHeap>			m_resourceDescriptors;
+	Microsoft::WRL::ComPtr<ID3D12Resource>								m_catTexture;
+	enum Descriptors
+	{
+		Cat,
+		Count
+	};
+
+	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
+	DirectX::SimpleMath::Vector2 m_screenPos;
+	DirectX::SimpleMath::Vector2 m_origin;
+#endif
 };
 
 }// namespace EyeEngine
