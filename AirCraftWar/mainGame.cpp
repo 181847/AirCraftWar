@@ -1,4 +1,4 @@
-#include <EyeEngine\GameWindow.h>
+﻿#include <EyeEngine\GameWindow.h>
 #include <EyeEngine\EyeLogger.h>
 #include <iostream>
 #include <Windows.h>
@@ -16,6 +16,8 @@ int main(int argc, char ** argv)
 	HINSTANCE hInstance;
 	hInstance = GetModuleHandle(NULL);
 
+	EyeEngine::EyeLogger::LogInfo(L"Game start, output one: %d ", 1);
+
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetBreakAlloc(166);
@@ -30,6 +32,5 @@ int main(int argc, char ** argv)
 	std::cout << "Game end, press enter to quit.." << std::endl;
 	std::getchar();
 
-	_CrtDumpMemoryLeaks();
 	return 0;
 }
