@@ -220,6 +220,8 @@ void RenderSystem::WindowOnResize(int newWidth, int newHeight)
 	ThrowIfFailed(_cmdList->Close());
 	ID3D12CommandList* cmdList[] = { _cmdList.Get() };
 	_cmdQueue->ExecuteCommandLists(1, cmdList);
+
+	//m_graphicMemory->Commit(_cmdQueue.Get());
 	FlushCommandQueue();
 
 	// Update the viewport transform to cover the client area.
@@ -250,6 +252,7 @@ float RenderSystem::WindowAspectRation()
 
 void RenderSystem::FlushCommandQueue()
 {
+	m_graphicMemory->Commit(_cmdQueue.Get());
 	++_currFenceValue;
 	_cmdQueue->Signal(_fence.Get(), _currFenceValue);
 	
@@ -259,6 +262,13 @@ void RenderSystem::FlushCommandQueue()
 bool RenderSystem::IsDeviceCreated()
 {
 	return _d3dDevice != nullptr;
+}
+
+void RenderSystem::OnDeviceLost()
+{
+	_dxgiFactory.Reset();
+	_d3dDevice.Reset();
+	m_graphicMemory.reset();
 }
 
 void RenderSystem::LogAdapters()
@@ -340,7 +350,7 @@ void RenderSystem::LogOutputDisplayModes(IDXGIOutput * output, DXGI_FORMAT forma
 void RenderSystem::WindowClear()
 {
 	ThrowIfFailed(_directCmdAlloc->Reset());
-	_cmdList->Reset(_directCmdAlloc.Get(), nullptr);
+	ThrowIfFailed(_cmdList->Reset(_directCmdAlloc.Get(), nullptr));
 	
 	_cmdList->RSSetViewports(1, &_screenViewport);
 	_cmdList->RSSetScissorRects(1, &_scissorRect);
@@ -350,9 +360,7 @@ void RenderSystem::WindowClear()
 		D3D12_RESOURCE_STATE_PRESENT,
 		D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	float redChannelForTime = 0.5f + 0.5f * sin(gt.TotalTime());
-	FLOAT color[4] = { redChannelForTime, 0.0f, 0.0f, 1.0f };
-	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), color, 0, nullptr);
+	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), DirectX::Colors::Blue, 0, nullptr);
 	_cmdList->ClearDepthStencilView(WindowDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0F, 0, 0, nullptr);
 	_cmdList->OMSetRenderTargets(1, &WindowCurrentBackBufferView(), true, &WindowDepthStencilView());
 }
@@ -368,8 +376,18 @@ void RenderSystem::WindowPresent()
 	ID3D12CommandList* cmdLists[] = { _cmdList.Get() };
 	_cmdQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
-	ThrowIfFailed(_swapChain->Present(0, 0));
-	WindowTickSwapChain();
+	HRESULT hr = _swapChain->Present(0, 0);
+
+	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
+	{
+		OnDeviceLost();
+	}
+	else
+	{
+		ThrowIfFailed(hr);
+		WindowTickSwapChain();
+	}
+
 }
 
 void RenderSystem::WindowDraw(GameTimer & gt)
@@ -377,9 +395,14 @@ void RenderSystem::WindowDraw(GameTimer & gt)
 	
 	WindowClear();
 
+
+	float redChannelForTime = 0.5f + 0.5f * sin(gt.TotalTime());
+	FLOAT color[4] = { redChannelForTime, 0.0f, 0.0f, 1.0f };
+	_cmdList->ClearRenderTargetView(WindowCurrentBackBufferView(), color, 0, nullptr);
+
 	WindowPresent();
 
-	m_graphicMemory->Commit(_cmdQueue.Get());
+	//m_graphicMemory->Commit(_cmdQueue.Get());
 
 	FlushCommandQueue();
 }
@@ -401,6 +424,38 @@ FrameResource * RenderSystem::WindowGetCurrentFrameResouce()
 {
 	return _frameResources[_currFrameResourceIndex].get();
 }
+
+
+#ifdef TEST_DIRECTXTK_12
+
+void RenderSystem::TestDXTK12_loadTexture()
+{
+	m_resourceDescriptors = std::make_unique<DirectX::DescriptorHeap>(_d3dDevice.Get(),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		Descriptors::Count);
+
+	DirectX::ResourceUploadBatch resourceUpload(_d3dDevice.Get());
+
+	resourceUpload.Begin();
+
+	ThrowIfFailed(CreateWICTextureFromFile(_d3dDevice.Get(), resourceUpload, L"TestingDirectXTK\Texture", m_catTexture.GetAddressOf()));
+
+	DirectX::CreateShaderResourceView(_d3dDevice.Get(), m_catTexture.Get(), 
+		m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
+
+	auto upLoadResourceFinished = resourceUpload.End(_cmdQueue.Get());
+
+	upLoadResourceFinished.wait();
+}
+
+void RenderSystem::TestDXTK12_loadTexture_onDeviceLost()
+{
+	m_resourceDescriptors.reset();
+	m_catTexture.Reset();
+}
+
+#endif
 
 }// namespace EyeEngine
 

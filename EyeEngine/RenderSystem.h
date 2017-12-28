@@ -5,6 +5,8 @@
 #include "FrameResource.h"
 #include "DirectXTKIncludeHeader.h"
 
+#undef TEST_DIRECTXTK_12
+
 namespace EyeEngine
 {
 
@@ -67,6 +69,18 @@ protected:
 
 #pragma endregion
 
+#pragma region testing variables about DirectXTK12
+#ifdef TEST_DIRECTXTK_12
+	std::unique_ptr<DirectX::DescriptorHeap> m_resourceDescriptors;
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_catTexture;
+	enum Descriptors
+	{
+		Cat,
+		Count
+	};
+#endif
+#pragma endregion
+
 public:
 	RenderSystem(UINT numFrameResources = 3);
 	DELETE_COPY_CONSTRUCTOR(RenderSystem)
@@ -93,6 +107,9 @@ public:
 
 	// Return whether the device has been created.
 	bool IsDeviceCreated();
+
+	// Called when the device removed or reset,
+	void OnDeviceLost();
 #pragma endregion
 
 #pragma region functions for logging adapter and output display modes
@@ -165,6 +182,14 @@ protected:
 
 	// Get the FrameResource with the index _currFrameResourceIndex.
 	FrameResource* WindowGetCurrentFrameResouce();
+#pragma endregion
+
+#pragma region functions about test DirectXTK12
+	// create descriptors and load textures.
+	void TestDXTK12_loadTexture();
+
+	// reset the descriptors and heaps.
+	void TestDXTK12_loadTexture_onDeviceLost();
 #pragma endregion
 
 };
