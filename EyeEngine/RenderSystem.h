@@ -1,8 +1,4 @@
 #pragma once
-#include <DirectX12/Common/d3dUtil.h>
-#include <DirectX12/Common/Camera.h>
-#include <DirectX12/Common/GameTimer.h>
-#include "FrameResource.h"
 #include "DirectXTKIncludeHeader.h"
 
 #undef TEST_DIRECTXTK_12

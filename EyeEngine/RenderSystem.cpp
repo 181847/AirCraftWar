@@ -5,17 +5,6 @@
 
 namespace EyeEngine
 {
-RenderSystem::RenderSystem(UINT numFrameResources)
-	:_numFrameResource(numFrameResources)
-{
-}
-
-RenderSystem::~RenderSystem()
-{
-}
-
-
-#endif
 
 }// namespace EyeEngine
 
