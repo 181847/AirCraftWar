@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\GitHub\C_C++\Library;$(Solutiondir)/deps/include/;$(IncludePath)</IncludePath>
+    <IncludePath>$(Solutiondir)/deps/include/;$(IncludePath)</IncludePath>
     <LibraryPath>$(SoluctionDir)/deps/lib/;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -141,34 +141,17 @@
     <Text Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Library\DirectX12\Common\Camera.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dApp.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dUtil.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\d3dx12.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\DDSTextureLoader.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\GameTimer.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\GeometryGenerator.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\MathHelper.h" />
-    <ClInclude Include="..\..\Library\DirectX12\Common\UploadBuffer.h" />
     <ClInclude Include="D3D12Helper.h" />
     <ClInclude Include="DirectXTKIncludeHeader.h" />
     <ClInclude Include="EyeLogger.h" />
-    <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameWindow.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="RenderSystem.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\DirectX12\Common\Camera.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\d3dApp.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\d3dUtil.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\DDSTextureLoader.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\GameTimer.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\GeometryGenerator.cpp" />
-    <ClCompile Include="..\..\Library\DirectX12\Common\MathHelper.cpp" />
     <ClCompile Include="D3D12Helper.cpp" />
     <ClCompile Include="EyeLogger.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="GameWindow.cpp" />
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
