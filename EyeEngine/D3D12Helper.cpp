@@ -15,7 +15,7 @@ D3D12Helper::CreateCommandQueue(
 	queueDesc.Flags = flag;
 	queueDesc.NodeMask = nodeMask;
 	queueDesc.Priority = priority;
-	ThrowIfFailed(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(ppCmdQueue)));
+	DX::ThrowIfFailed(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(ppCmdQueue)));
 }
 
 void 
@@ -23,7 +23,7 @@ D3D12Helper::CreateCommandAllocator(
 	ID3D12Device * pDevice, ID3D12CommandAllocator ** ppCmdAllocator, 
 	D3D12_COMMAND_LIST_TYPE type)
 {
-	ThrowIfFailed(pDevice->CreateCommandAllocator(type,
+	DX::ThrowIfFailed(pDevice->CreateCommandAllocator(type,
 		IID_PPV_ARGS(ppCmdAllocator)));
 }
 
@@ -36,7 +36,7 @@ D3D12Helper::CreateCommandList(
 	UINT							nodeMask, 
 	ID3D12PipelineState *			pInitPSO)
 {
-	ThrowIfFailed(pDevice->CreateCommandList(
+	DX::ThrowIfFailed(pDevice->CreateCommandList(
 		nodeMask,
 		type,
 		pAllco, // Associated command allocator
@@ -47,7 +47,7 @@ D3D12Helper::CreateCommandList(
 }
 
 void D3D12Helper::CreateSwapChain(
-	IDXGIFactory4* pDxgiFactory,
+	IDXGIFactory* pDxgiFactory,
 	ID3D12CommandQueue* pCmdQueue,
 	IDXGISwapChain** ppSwapChain,
 	HWND outputWindow, 
@@ -66,12 +66,12 @@ void D3D12Helper::CreateSwapChain(
 	scDesc.SwapEffect = swapEffect;
 	scDesc.Flags = flags;
 
-	ThrowIfFailed(pDxgiFactory->CreateSwapChain(pCmdQueue, &scDesc, ppSwapChain));
+	DX::ThrowIfFailed(pDxgiFactory->CreateSwapChain(pCmdQueue, &scDesc, ppSwapChain));
 }
 
 void D3D12Helper::CreateFence(ID3D12Device * pDevice, ID3D12Fence** ppFence, UINT64 initValue, D3D12_FENCE_FLAGS flags)
 {
-	ThrowIfFailed(pDevice->CreateFence(
+	DX::ThrowIfFailed(pDevice->CreateFence(
 		initValue, flags, IID_PPV_ARGS(ppFence)));
 }
 
@@ -136,7 +136,7 @@ CreateDescriptorHeap(
 	heapDesc.Flags = flag;
 	heapDesc.NodeMask = nodeMask;
 
-	ThrowIfFailed(d3dDevice->CreateDescriptorHeap(
+	DX::ThrowIfFailed(d3dDevice->CreateDescriptorHeap(
 		&heapDesc, IID_PPV_ARGS(pDescriptorHeap)));
 }
 
