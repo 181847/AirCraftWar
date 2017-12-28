@@ -1,30 +1,20 @@
 #pragma once
-#include <DirectX12/Common/GameTimer.h>
-#include "RenderSystem.h"
+#include "pch.h"
+#include "Common/StepTimer.h"
+#include "EyeLogger.h"
 
-// Link necessary d3d12 libraries.
-#pragma comment(lib,"d3dcompiler.lib")
-#pragma comment(lib, "D3D12.lib")
-#pragma comment(lib, "dxgi.lib")
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
-// Indicates to hybrid graphics systems to prefer the discrete part by default
-extern "C"
-{
-	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-}
 
 namespace EyeEngine
 {
 
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 class GameWindow
 {
 public:
 	GameWindow(HINSTANCE hInstance);
-	virtual ~GameWindow();
+	~GameWindow() = default;
 protected:
 
 	GameWindow(const GameWindow& rhs) = delete;
@@ -45,10 +35,10 @@ public:
 
 protected:
 
-	static GameWindow* _window;
+	static GameWindow* m_window;
 
-	HINSTANCE _hAppInst = nullptr; // application instance handle
-	HWND      _hMainWnd = nullptr; // main window handle
+	HINSTANCE m_hAppInst = nullptr; // application instance handle
+	HWND      m_hMainWnd = nullptr; // main window handle
 	
 };
 

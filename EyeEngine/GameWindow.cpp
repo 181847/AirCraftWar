@@ -1,0 +1,299 @@
+#include "GameWindow.h"
+
+
+// Indicates to hybrid graphics systems to prefer the discrete part by default
+extern "C"
+{
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
+namespace EyeEngine
+{
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	return GameWindow::GetWindow()->MsgProc(hwnd, message, wParam, lParam);
+}
+
+GameWindow* GameWindow::m_window = nullptr;
+
+GameWindow::GameWindow(HINSTANCE hInstance)
+{
+	m_hAppInst = hInstance;
+	assert(m_window == nullptr);
+	m_window = this;
+	
+}
+
+GameWindow * EyeEngine::GameWindow::GetWindow()
+{
+	return m_window;
+}
+
+HINSTANCE GameWindow::AppInst() const
+{
+	return m_hAppInst;
+}
+
+HWND GameWindow::MainWnd() const
+{
+	return m_hMainWnd;
+}
+
+bool EyeEngine::GameWindow::Initialize()
+{
+	if (!DirectX::XMVerifyCPUSupport())
+		return 1;
+
+	Microsoft::WRL::Wrappers::RoInitializeWrapper initialize(RO_INIT_MULTITHREADED);
+	if (FAILED(initialize))
+		return false;
+
+	// Register class and create window
+	{
+		// Register class
+		WNDCLASSEX wcex;
+		wcex.cbSize = sizeof(WNDCLASSEX);
+		wcex.style = CS_HREDRAW | CS_VREDRAW;
+		wcex.lpfnWndProc = WndProc;
+		wcex.cbClsExtra = 0;
+		wcex.cbWndExtra = 0;
+		wcex.hInstance = m_hAppInst;
+		//wcex.hIcon = LoadIcon(hInstance, L"IDI_ICON");
+		wcex.hIcon = NULL;
+		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+		wcex.lpszMenuName = nullptr;
+		wcex.lpszClassName = L"EyeEngineGameWindow";
+		//wcex.hIconSm = LoadIcon(wcex.hInstance, L"IDI_ICON");
+		wcex.hIconSm = NULL;
+		if (!RegisterClassEx(&wcex))
+			return false;
+
+		// Create window
+		int w, h;
+		w = 500;
+		h = 400;
+		//g_game->GetDefaultSize(w, h);
+
+		RECT rc;
+		rc.top = 0;
+		rc.left = 0;
+		rc.right = static_cast<LONG>(w);
+		rc.bottom = static_cast<LONG>(h);
+
+		AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+
+		HWND hwnd = CreateWindowEx(0, L"EyeEngineGameWindow", L"WindowTemplate", WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, m_hAppInst,
+			nullptr);
+		// TODO: Change to CreateWindowEx(WS_EX_TOPMOST, L"TryDirectX12Win32GameTemplateWindowClass", L"TryDirectX12Win32GameTemplate", WS_POPUP,
+		// to default to full screen.
+
+		if (!hwnd)
+			return false;
+
+		ShowWindow(hwnd, SW_SHOWDEFAULT);
+		// TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to full screen.
+
+		//SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
+
+		GetClientRect(hwnd, &rc);
+
+		//g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
+	}
+
+	return true;
+}
+
+int GameWindow::Run()
+{
+
+	// Main message loop
+	MSG msg = {};
+	while (WM_QUIT != msg.message)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			//g_game->Tick();
+		}
+	}
+
+	//g_game.reset();
+
+	CoUninitialize();
+
+	return (int)msg.wParam;
+}
+
+
+LRESULT GameWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	PAINTSTRUCT ps;
+	HDC hdc;
+
+	static bool s_in_sizemove = false;
+	static bool s_in_suspend = false;
+	static bool s_minimized = false;
+	static bool s_fullscreen = false;
+	// TODO: Set s_fullscreen to true if defaulting to full screen.
+
+	//auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+	switch (msg)
+	{
+	case WM_PAINT:
+		if (s_in_sizemove /*&& game*/)
+		{
+			//game->Tick();
+		}
+		else
+		{
+			hdc = BeginPaint(hWnd, &ps);
+			EndPaint(hWnd, &ps);
+		}
+		break;
+
+	case WM_SIZE:
+		if (wParam == SIZE_MINIMIZED)
+		{
+			if (!s_minimized)
+			{
+				s_minimized = true;
+				if (!s_in_suspend  /*&& game*/)
+				{
+					//game->OnSuspending();
+				}
+				s_in_suspend = true;
+			}
+		}
+		else if (s_minimized)
+		{
+			s_minimized = false;
+			if (s_in_suspend /*&& game*/)
+			{
+				//game->OnResuming();
+			}
+			s_in_suspend = false;
+		}
+		else if (!s_in_sizemove/* && game*/)
+		{
+			//game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
+		}
+		break;
+
+	case WM_ENTERSIZEMOVE:
+		s_in_sizemove = true;
+		break;
+
+	case WM_EXITSIZEMOVE:
+		s_in_sizemove = false;
+		/*if (game)
+		{
+			RECT rc;
+			GetClientRect(hWnd, &rc);
+
+			game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
+		}*/
+		break;
+
+	case WM_GETMINMAXINFO:
+	{
+		auto info = reinterpret_cast<MINMAXINFO*>(lParam);
+		info->ptMinTrackSize.x = 320;
+		info->ptMinTrackSize.y = 200;
+	}
+	break;
+
+	case WM_ACTIVATEAPP:
+		/*if (game)
+		{
+			if (wParam)
+			{
+				game->OnActivated();
+			}
+			else
+			{
+				game->OnDeactivated();
+			}
+		}*/
+		break;
+
+	case WM_POWERBROADCAST:
+		switch (wParam)
+		{
+		case PBT_APMQUERYSUSPEND:
+			if (!s_in_suspend /* && game*/)
+			{
+				//game->OnSuspending();
+			}
+			s_in_suspend = true;
+			return TRUE;
+
+		case PBT_APMRESUMESUSPEND:
+			if (!s_minimized)
+			{
+				if (s_in_suspend /*&& game*/)
+				{
+					//game->OnResuming();
+				}
+				s_in_suspend = false;
+			}
+			return TRUE;
+		}
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_SYSKEYDOWN:
+		if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		{
+			// Implements the classic ALT+ENTER fullscreen toggle
+			if (s_fullscreen)
+			{
+				SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+				SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
+
+				int width = 800;
+				int height = 600;
+				/*if (game)
+					game->GetDefaultSize(width, height);*/
+
+				ShowWindow(hWnd, SW_SHOWNORMAL);
+
+				SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+			}
+			else
+			{
+				SetWindowLongPtr(hWnd, GWL_STYLE, 0);
+				SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+
+				SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+				ShowWindow(hWnd, SW_SHOWMAXIMIZED);
+			}
+
+			s_fullscreen = !s_fullscreen;
+		}
+		break;
+
+	case WM_MENUCHAR:
+		// A menu is active and the user presses a key that does not correspond
+		// to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
+		return MAKELRESULT(0, MNC_CLOSE);
+	}
+
+	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+
+
+}// namespace EyeEngine
