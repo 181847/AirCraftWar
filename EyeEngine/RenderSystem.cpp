@@ -252,7 +252,7 @@ float RenderSystem::WindowAspectRation()
 
 void RenderSystem::FlushCommandQueue()
 {
-	m_graphicMemory->Commit(_cmdQueue.Get());
+	//m_graphicMemory->Commit(_cmdQueue.Get());
 	++_currFenceValue;
 	_cmdQueue->Signal(_fence.Get(), _currFenceValue);
 	
