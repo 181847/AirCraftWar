@@ -50,6 +50,8 @@ bool EyeEngine::GameWindow::Initialize()
 	if (FAILED(initialize))
 		return false;
 
+	m_game = std::make_unique<Game>();
+
 	// Register class and create window
 	{
 		// Register class
@@ -75,7 +77,7 @@ bool EyeEngine::GameWindow::Initialize()
 		int w, h;
 		w = 500;
 		h = 400;
-		//g_game->GetDefaultSize(w, h);
+		m_game->GetDefaultSize(w, h);
 
 		RECT rc;
 		rc.top = 0;
@@ -101,7 +103,7 @@ bool EyeEngine::GameWindow::Initialize()
 
 		GetClientRect(hwnd, &rc);
 
-		//g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
+		m_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
 	}
 
 	return true;
@@ -121,11 +123,11 @@ int GameWindow::Run()
 		}
 		else
 		{
-			//g_game->Tick();
+			m_game->Tick();
 		}
 	}
 
-	//g_game.reset();
+	m_game.reset();
 
 	CoUninitialize();
 

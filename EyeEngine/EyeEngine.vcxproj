@@ -146,6 +146,7 @@
     <ClInclude Include="D3D12Helper.h" />
     <ClInclude Include="DirectXTKIncludeHeader.h" />
     <ClInclude Include="EyeLogger.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="GameWindow.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RenderSystem.h" />
@@ -153,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="D3D12Helper.cpp" />
     <ClCompile Include="EyeLogger.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RenderSystem.cpp" />

@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "Common/StepTimer.h"
 #include "EyeLogger.h"
+#include "Game.h"
 
 
 
@@ -39,7 +40,8 @@ protected:
 
 	HINSTANCE m_hAppInst = nullptr; // application instance handle
 	HWND      m_hMainWnd = nullptr; // main window handle
-	
+
+	std::unique_ptr<Game> m_game;
 };
 
 }// namespace EyeEngine
